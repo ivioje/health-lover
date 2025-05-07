@@ -1,4 +1,4 @@
-import { LucideProps } from "lucide-react";
+import { CheckIcon, LucideProps } from "lucide-react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -53,6 +53,7 @@ export const Icons = {
   text: FileText,
   image: Image,
   more: MoreVertical,
+  check: CheckIcon,
   gitHub: ({ ...props }: LucideProps) => (
     <svg
       xmlns="http://www.w3.org/2000/svg"

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import UserModel from '@/lib/models/userModel';
+import User from "@/lib/models/userModel";
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,5 +41,53 @@ export async function GET(request: NextRequest) {
       success: false, 
       message: error.message || 'Failed to verify email' 
     }, { status: 500 });
+  }
+}
+
+
+export async function POST(req: Request) {
+  try {
+    // Connect to the database
+    await connectToDatabase();
+
+    // Get the token from the request body
+    const { token } = await req.json();
+
+    if (!token) {
+      return NextResponse.json(
+        { message: "Verification token is missing" },
+        { status: 400 }
+      );
+    }
+
+    // Find the user with the verification token
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpiry: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { message: "Invalid or expired verification token" },
+        { status: 400 }
+      );
+    }
+
+    // Update the user's email verification status
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpiry = undefined;
+    await user.save();
+
+    return NextResponse.json(
+      { message: "Email verified successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error verifying email:", error);
+    return NextResponse.json(
+      { message: "Failed to verify email" },
+      { status: 500 }
+    );
   }
 }

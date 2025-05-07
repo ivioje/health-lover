@@ -5,34 +5,47 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Icons } from "@/components/ui/icons";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verified, setVerified] = useState(false);
+
+  const [isVerifying, setIsVerifying] = useState(true);
+  const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const verifyEmail = async () => {
-      if (!token) return;
-      
-      setIsVerifying(true);
-      
+      if (!token) {
+        setError("Verification token is missing");
+        setIsVerifying(false);
+        return;
+      }
+
       try {
-        const response = await fetch(`/api/auth/verify-email?token=${token}`);
+        const response = await fetch("/api/auth/verify-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token }),
+        });
+
         const data = await response.json();
 
         if (response.ok) {
-          setVerified(true);
+          setIsVerified(true);
+          // Redirect to login page after 3 seconds
+          setTimeout(() => {
+            router.push("/auth/login");
+          }, 3000);
         } else {
-          setError(data.message || "Failed to verify email. Please try again.");
+          setError(data.message || "Failed to verify email address");
         }
       } catch (error) {
-        console.error("Email verification error:", error);
         setError("An unexpected error occurred. Please try again.");
       } finally {
         setIsVerifying(false);
@@ -40,7 +53,7 @@ export default function VerifyEmailPage() {
     };
 
     verifyEmail();
-  }, [token]);
+  }, [token, router]);
 
   return (
     <div className="container py-10 flex justify-center">
@@ -52,58 +65,67 @@ export default function VerifyEmailPage() {
               Verifying your email address
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center py-10">
+          <CardContent className="flex flex-col items-center space-y-6 py-4">
             {isVerifying ? (
               <div className="flex flex-col items-center space-y-4">
-                <Icons.spinner className="h-12 w-12 animate-spin text-primary" />
-                <p className="text-center text-muted-foreground">
-                  Verifying your email address...
-                </p>
+                <Icons.spinner className="h-10 w-10 animate-spin text-primary" />
+                <p>Verifying your email address...</p>
               </div>
-            ) : error ? (
-              <div className="flex flex-col items-center space-y-4">
-                <div className="p-3 rounded-full bg-red-100">
-                  <Icons.close className="h-10 w-10 text-red-600" />
-                </div>
-                <div className="text-center space-y-2">
-                  <h3 className="font-semibold">Verification Failed</h3>
-                  <p className="text-muted-foreground">{error}</p>
-                </div>
-              </div>
-            ) : verified ? (
-              <div className="flex flex-col items-center space-y-4">
+            ) : isVerified ? (
+              <>
                 <div className="p-3 rounded-full bg-green-100">
-                  <Icons.success className="h-10 w-10 text-green-600" />
+                  <Icons.check className="h-10 w-10 text-green-600" />
                 </div>
-                <div className="text-center space-y-2">
-                  <h3 className="font-semibold">Email Verified Successfully</h3>
-                  <p className="text-muted-foreground">
-                    Thank you for verifying your email address. You can now log in to your account.
-                  </p>
-                </div>
-              </div>
+                <Alert className="border-green-500 bg-green-50">
+                  <AlertDescription className="text-green-800">
+                    Your email has been verified! Redirecting to login...
+                  </AlertDescription>
+                </Alert>
+              </>
             ) : (
-              <div className="flex flex-col items-center space-y-4">
-                <div className="p-3 rounded-full bg-amber-100">
-                  <Icons.warning className="h-10 w-10 text-amber-600" />
+              <>
+                <div className="p-3 rounded-full bg-red-100">
+                  <Icons.warning className="h-10 w-10 text-red-600" />
                 </div>
-                <div className="text-center space-y-2">
-                  <h3 className="font-semibold">Invalid Request</h3>
-                  <p className="text-muted-foreground">
-                    No verification token was provided. Please use the link from your verification email.
-                  </p>
-                </div>
-              </div>
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    {error || "Failed to verify your email address."}
+                  </AlertDescription>
+                </Alert>
+              </>
             )}
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Button 
-              variant="default" 
-              onClick={() => router.push("/auth/login")}
-              className="w-full sm:w-auto"
-            >
-              Go to Login
-            </Button>
+            {!isVerifying && !isVerified && (
+              <div className="flex flex-col space-y-4 w-full">
+                <Button 
+                  className="w-full"
+                  asChild
+                >
+                  <Link href="/auth/signup">
+                    Try signing up again
+                  </Link>
+                </Button>
+                <div className="text-center">
+                  <Link
+                    href="/auth/login"
+                    className="text-primary hover:underline"
+                  >
+                    Back to Login
+                  </Link>
+                </div>
+              </div>
+            )}
+            {!isVerifying && isVerified && (
+              <div className="text-center">
+                <Link
+                  href="/auth/login"
+                  className="text-primary hover:underline"
+                >
+                  Go to Login
+                </Link>
+              </div>
+            )}
           </CardFooter>
         </Card>
       </div>

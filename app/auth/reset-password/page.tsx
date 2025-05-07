@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { z } from "zod";
@@ -14,12 +14,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Icons } from "@/components/ui/icons";
 
 const formSchema = z.object({
-  password: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .max(100, "Password is too long"),
-  confirmPassword: z.string()
-    .min(8, "Password must be at least 8 characters")
-}).refine(data => data.password === data.confirmPassword, {
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(8, "Confirm password must be at least 8 characters"),
+}).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
 });
@@ -30,10 +27,12 @@ export default function ResetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+  const [validating, setValidating] = useState(true);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -43,79 +42,129 @@ export default function ResetPasswordPage() {
     },
   });
 
-  const onSubmit = async (values: FormValues) => {
-    if (!token) {
-      setError("Reset token is missing. Please use the link from your email.");
-      return;
-    }
+  // Validate the token when the component mounts
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!token) {
+        setTokenValid(false);
+        setValidating(false);
+        return;
+      }
 
-    setError(null);
-    setSuccess(null);
+      try {
+        const response = await fetch(`/api/auth/reset-password?token=${token}`, {
+          method: "GET",
+        });
+
+        if (response.ok) {
+          setTokenValid(true);
+        } else {
+          setTokenValid(false);
+        }
+      } catch (error) {
+        setTokenValid(false);
+      } finally {
+        setValidating(false);
+      }
+    };
+
+    validateToken();
+  }, [token]);
+
+  const onSubmit = async (values: FormValues) => {
+    if (!token) return;
+
     setIsLoading(true);
+    setError(null);
+    setSuccess(false);
 
     try {
-      const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          token, 
-          password: values.password 
+        body: JSON.stringify({
+          token,
+          password: values.password,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess(data.message || "Password has been reset successfully. You can now login with your new password.");
+        setSuccess(true);
         form.reset();
-        // Redirect to login page after 2 seconds
-        setTimeout(() => router.push("/auth/login"), 2000);
+        // Redirect to login page after 3 seconds
+        setTimeout(() => {
+          router.push("/auth/login");
+        }, 3000);
       } else {
-        setError(data.message || "Failed to reset password. Please try again.");
+        setError(data.message || "An error occurred while resetting your password");
       }
     } catch (error) {
-      console.error("Password reset error:", error);
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle missing token
-  if (!token) {
+  // Show loading state while validating the token
+  if (validating) {
+    return (
+      <div className="container py-10 flex justify-center">
+        <div className="w-full max-w-md">
+          <Card>
+            <CardContent className="pt-6 flex flex-col items-center justify-center py-10">
+              <Icons.spinner className="h-10 w-10 animate-spin text-primary" />
+              <p className="mt-4 text-center">Validating your reset link...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // If the token is invalid, show an error message
+  if (tokenValid === false) {
     return (
       <div className="container py-10 flex justify-center">
         <div className="w-full max-w-md">
           <Card>
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold text-center">Invalid Request</CardTitle>
+              <CardTitle className="text-2xl font-bold text-center">Invalid or Expired Link</CardTitle>
               <CardDescription className="text-center">
-                Missing password reset token
+                This password reset link is invalid or has expired.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center py-10">
-              <div className="flex flex-col items-center space-y-4">
-                <div className="p-3 rounded-full bg-amber-100">
-                  <Icons.warning className="h-10 w-10 text-amber-600" />
-                </div>
-                <div className="text-center space-y-2">
-                  <h3 className="font-semibold">Reset Token Missing</h3>
-                  <p className="text-muted-foreground">
-                    Your password reset link is invalid or has expired. Please request a new password reset link.
-                  </p>
-                </div>
+            <CardContent className="flex flex-col items-center space-y-6 py-4">
+              <div className="p-3 rounded-full bg-red-100">
+                <Icons.warning className="h-10 w-10 text-red-600" />
               </div>
+
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Please request a new password reset link.
+                </AlertDescription>
+              </Alert>
             </CardContent>
-            <CardFooter className="flex justify-center">
+            <CardFooter className="flex flex-col space-y-4">
               <Button 
-                variant="default" 
-                onClick={() => router.push("/auth/forgot-password")}
-                className="w-full sm:w-auto"
+                className="w-full"
+                asChild
               >
-                Request New Password Reset
+                <Link href="/auth/forgot-password">
+                  Request a new link
+                </Link>
               </Button>
+              <div className="text-center text-sm text-muted-foreground">
+                <Link
+                  href="/auth/login"
+                  className="text-primary hover:underline"
+                >
+                  Back to Login
+                </Link>
+              </div>
             </CardFooter>
           </Card>
         </div>
@@ -123,14 +172,15 @@ export default function ResetPasswordPage() {
     );
   }
 
+  // If the token is valid, show the reset password form
   return (
     <div className="container py-10 flex justify-center">
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Reset Your Password</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">Reset password</CardTitle>
             <CardDescription className="text-center">
-              Enter and confirm your new password
+              Enter your new password
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -141,13 +191,15 @@ export default function ResetPasswordPage() {
             )}
             
             {success && (
-              <Alert className="mb-6 bg-green-50 border-green-200">
-                <AlertDescription className="text-green-800">{success}</AlertDescription>
+              <Alert className="mb-6 border-green-500 bg-green-50">
+                <AlertDescription className="text-green-800">
+                  Password reset successful! Redirecting to login...
+                </AlertDescription>
               </Alert>
             )}
-
+            
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
                   name="password"
@@ -159,7 +211,7 @@ export default function ResetPasswordPage() {
                           placeholder="••••••••" 
                           type="password" 
                           {...field} 
-                          disabled={isLoading || !!success}
+                          disabled={isLoading || success}
                         />
                       </FormControl>
                       <FormMessage />
@@ -171,13 +223,13 @@ export default function ResetPasswordPage() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
+                      <FormLabel>Confirm New Password</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="••••••••" 
                           type="password" 
                           {...field} 
-                          disabled={isLoading || !!success}
+                          disabled={isLoading || success}
                         />
                       </FormControl>
                       <FormMessage />
@@ -187,29 +239,30 @@ export default function ResetPasswordPage() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isLoading || !!success}
+                  disabled={isLoading || success}
                 >
                   {isLoading ? (
                     <>
                       <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                      Resetting Password...
+                      Resetting password...
                     </>
                   ) : (
-                    "Reset Password"
+                    "Reset password"
                   )}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter>
-            <div className="w-full text-center">
+            <p className="text-center text-sm text-muted-foreground w-full">
+              Remember your password?{" "}
               <Link 
                 href="/auth/login" 
-                className="text-sm text-primary hover:underline"
+                className="text-primary hover:underline"
               >
-                Back to login
+                Sign in
               </Link>
-            </div>
+            </p>
           </CardFooter>
         </Card>
       </div>

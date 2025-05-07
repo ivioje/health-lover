@@ -6,6 +6,7 @@ import Link from "next/link";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,25 +14,24 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Icons } from "@/components/ui/icons";
-import { signIn } from "next-auth/react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(8, "Confirm password must be at least 8 characters"),
 }).refine((data) => data.password === data.confirmPassword, {
-  path: ["confirmPassword"],
   message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function SignupPage() {
+export default function SignUpPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [signupError, setSignupError] = useState<string | null>(null);
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
@@ -45,15 +45,15 @@ export default function SignupPage() {
   });
 
   const onSubmit = async (values: FormValues) => {
-    setError(null);
-    setSuccess(null);
     setIsLoading(true);
+    setSignupError(null);
+    setSignupSuccess(false);
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: values.name,
@@ -64,30 +64,30 @@ export default function SignupPage() {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
+      if (response.ok) {
+        setSignupSuccess(true);
+        form.reset();
+      } else {
+        setSignupError(data.message || "An error occurred during registration");
       }
-
-      setSuccess(data.message || "Registration successful! Please check your email to verify your account.");
-      form.reset();
-    } catch (error: any) {
-      setError(error.message || "An unexpected error occurred. Please try again.");
+    } catch (error) {
+      setSignupError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleOAuthSignIn = async (provider: string) => {
-    setError(null);
+    setSignupError(null);
     setOauthLoading(provider);
     
     try {
       await signIn(provider, {
-        callbackUrl: "/dashboard",
+        callbackUrl: '/dashboard',
       });
     } catch (error) {
       console.error(`${provider} login error:`, error);
-      setError(`Failed to sign in with ${provider}. Please try again.`);
+      setSignupError(`Failed to sign in with ${provider}. Please try again.`);
       setOauthLoading(null);
     }
   };
@@ -97,21 +97,23 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Sign up</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
             <CardDescription className="text-center">
-              Create an account to get started
+              Sign up for a Health Lover account
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {error && (
+            {signupError && (
               <Alert variant="destructive" className="mb-6">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{signupError}</AlertDescription>
               </Alert>
             )}
             
-            {success && (
-              <Alert className="mb-6 bg-green-50 border-green-200">
-                <AlertDescription className="text-green-800">{success}</AlertDescription>
+            {signupSuccess && (
+              <Alert className="mb-6 border-green-500 bg-green-50">
+                <AlertDescription className="text-green-800">
+                  Registration successful! Please check your email to verify your account.
+                </AlertDescription>
               </Alert>
             )}
             
@@ -153,7 +155,7 @@ export default function SignupPage() {
               </div>
               <div className="relative flex justify-center text-xs">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with email
+                  Or sign up with email
                 </span>
               </div>
             </div>
@@ -165,7 +167,7 @@ export default function SignupPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>Name</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="John Doe" 

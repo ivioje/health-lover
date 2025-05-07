@@ -21,7 +21,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -31,29 +31,30 @@ export default function ForgotPasswordPage() {
   });
 
   const onSubmit = async (values: FormValues) => {
-    setError(null);
-    setSuccess(null);
     setIsLoading(true);
+    setError(null);
+    setSuccess(false);
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email: values.email }),
+        body: JSON.stringify({
+          email: values.email,
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess(data.message || "If your email exists in our system, you will receive password reset instructions.");
+        setSuccess(true);
         form.reset();
       } else {
-        setError(data.message || "An error occurred. Please try again.");
+        setError(data.message || "An error occurred while sending the reset link");
       }
-    } catch (error: any) {
-      console.error("Forgot password error:", error);
+    } catch (error) {
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -65,9 +66,9 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Forgot Password</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">Reset password</CardTitle>
             <CardDescription className="text-center">
-              Enter your email to receive a password reset link
+              Enter your email address and we'll send you a link to reset your password
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -78,13 +79,15 @@ export default function ForgotPasswordPage() {
             )}
             
             {success && (
-              <Alert className="mb-6 bg-green-50 border-green-200">
-                <AlertDescription className="text-green-800">{success}</AlertDescription>
+              <Alert className="mb-6 border-green-500 bg-green-50">
+                <AlertDescription className="text-green-800">
+                  Password reset link sent! Please check your email.
+                </AlertDescription>
               </Alert>
             )}
-
+            
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
                   name="email"
@@ -96,7 +99,7 @@ export default function ForgotPasswordPage() {
                           placeholder="your.email@example.com" 
                           type="email" 
                           {...field} 
-                          disabled={isLoading || !!success}
+                          disabled={isLoading || success}
                         />
                       </FormControl>
                       <FormMessage />
@@ -106,35 +109,30 @@ export default function ForgotPasswordPage() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isLoading || !!success}
+                  disabled={isLoading || success}
                 >
                   {isLoading ? (
                     <>
                       <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                      Sending email...
+                      Sending...
                     </>
                   ) : (
-                    "Send Reset Link"
+                    "Send reset link"
                   )}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter>
-            <div className="flex flex-col sm:flex-row items-center justify-between w-full text-sm">
+            <p className="text-center text-sm text-muted-foreground w-full">
+              Remember your password?{" "}
               <Link 
                 href="/auth/login" 
                 className="text-primary hover:underline"
               >
-                Back to login
+                Sign in
               </Link>
-              <Link 
-                href="/auth/signup" 
-                className="text-muted-foreground hover:text-primary mt-2 sm:mt-0"
-              >
-                Don't have an account? Sign up
-              </Link>
-            </div>
+            </p>
           </CardFooter>
         </Card>
       </div>
