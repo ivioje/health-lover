@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -26,8 +26,10 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const error = searchParams.get("error");
+  
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
@@ -38,34 +40,52 @@ export default function LoginPage() {
     },
   });
 
+  // Display the error from URL params
+  useEffect(() => {
+    if (error) {
+      switch (error) {
+        case "CredentialsSignin":
+          setLoginError("Invalid email or password. Please try again.");
+          break;
+        case "OAuthAccountNotLinked":
+          setLoginError("This email is already associated with another account. Try a different sign-in method.");
+          break;
+        default:
+          setLoginError("An error occurred while signing in. Please try again.");
+      }
+    }
+  }, [error]);
+
   const onSubmit = async (values: FormValues) => {
-    setError(null);
     setIsLoading(true);
+    setLoginError(null);
 
     try {
       const result = await signIn("credentials", {
+        redirect: false,
         email: values.email,
         password: values.password,
-        redirect: false,
+        callbackUrl,
       });
 
-      if (result?.error) {
-        setError(result.error);
-        return;
+      if (!result?.error) {
+        router.push(callbackUrl);
+      } else {
+        setLoginError(
+          result.error === "CredentialsSignin" 
+            ? "Invalid email or password. Please try again." 
+            : result.error
+        );
+        setIsLoading(false);
       }
-
-      router.push(callbackUrl);
-      router.refresh();
     } catch (error) {
-      console.error("Login error:", error);
-      setError("An unexpected error occurred. Please try again.");
-    } finally {
+      setLoginError("An unexpected error occurred. Please try again.");
       setIsLoading(false);
     }
   };
 
   const handleOAuthSignIn = async (provider: string) => {
-    setError(null);
+    setLoginError(null);
     setOauthLoading(provider);
     
     try {
@@ -74,7 +94,7 @@ export default function LoginPage() {
       });
     } catch (error) {
       console.error(`${provider} login error:`, error);
-      setError(`Failed to sign in with ${provider}. Please try again.`);
+      setLoginError(`Failed to sign in with ${provider}. Please try again.`);
       setOauthLoading(null);
     }
   };
@@ -86,13 +106,13 @@ export default function LoginPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">Sign in</CardTitle>
             <CardDescription className="text-center">
-              Enter your email and password to access your account
+              Enter your credentials to access your account
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {error && (
+            {loginError && (
               <Alert variant="destructive" className="mb-6">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{loginError}</AlertDescription>
               </Alert>
             )}
             
@@ -102,7 +122,7 @@ export default function LoginPage() {
                 type="button" 
                 className="w-full" 
                 onClick={() => handleOAuthSignIn('google')}
-                disabled={!!oauthLoading}
+                disabled={!!oauthLoading || isLoading}
               >
                 {oauthLoading === 'google' ? (
                   <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
@@ -117,7 +137,7 @@ export default function LoginPage() {
                 type="button" 
                 className="w-full" 
                 onClick={() => handleOAuthSignIn('github')}
-                disabled={!!oauthLoading}
+                disabled={!!oauthLoading || isLoading}
               >
                 {oauthLoading === 'github' ? (
                   <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
@@ -134,7 +154,7 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center text-xs">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
+                  Or continue with email
                 </span>
               </div>
             </div>
@@ -168,9 +188,9 @@ export default function LoginPage() {
                         <FormLabel>Password</FormLabel>
                         <Link 
                           href="/auth/forgot-password" 
-                          className="text-xs text-muted-foreground hover:text-primary"
+                          className="text-xs text-primary hover:underline"
                         >
-                          Forgot password?
+                          Forgot Password?
                         </Link>
                       </div>
                       <FormControl>

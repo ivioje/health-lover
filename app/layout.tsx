@@ -4,12 +4,13 @@ import { Inter } from "next/font/google";
 import { Navigation } from "@/components/layout/navigation";
 import { Footer } from "@/components/layout/footer";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SessionProvider } from "@/components/auth/session-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "HealthLover - AI-Powered Diet & Nutrition",
-  description: "Personalized diet recommendations and health predictions to help you live a healthier life.",
+  title: "Health Lover",
+  description: "Get the best health and diet recommendations",
 };
 
 export default function RootLayout({
@@ -26,11 +27,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex flex-col min-h-screen">
-            <Navigation />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <SessionProvider>
+            <div className="flex flex-col min-h-screen">
+              <Navigation />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>
