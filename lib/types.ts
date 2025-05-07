@@ -3,14 +3,26 @@ export interface Diet {
   name: string;
   description: string;
   imageUrl: string;
+  tags: string[];
   nutritionalFacts: {
     calories: number;
-    carbs: number;
     protein: number;
+    carbs: number;
     fat: number;
   };
   benefits: string[];
-  tags: string[];
+  sampleMeals: {
+    name: string;
+    description: string;
+  }[];
+  recipe?: {
+    ingredients: string[];
+    directions: string[];
+    servings: number;
+    prepTime: number;
+    cookTime: number;
+    difficulty: string;
+  };
 }
 
 export interface Category {
@@ -41,4 +53,31 @@ export interface UserProfile {
   categories: Category[];
   savedDiets: string[];
   healthPredictions: HealthPrediction[];
+  // Auth-related properties
+  emailVerified?: Date | null;
+  image?: string | null;
+  provider?: string | null;
+}
+
+// Authentication Types
+export interface SignUpData {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface SignInData {
+  email: string;
+  password: string;
+}
+
+export interface ResetPasswordData {
+  token: string;
+  password: string;
+}
+
+export interface AuthResult {
+  success: boolean;
+  message: string;
+  user?: UserProfile;
 }

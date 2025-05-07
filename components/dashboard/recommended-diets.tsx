@@ -33,7 +33,7 @@ export function RecommendedDiets({ recommendedIds }: RecommendedDietsProps) {
               Personalized diet recommendations based on your preferences
             </CardDescription>
           </div>
-          <Link href="/diets">
+          <Link href="/recommendations">
             <Button variant="ghost" size="sm" className="gap-1">
               View All <ArrowRight className="h-4 w-4" />
             </Button>

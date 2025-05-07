@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FolderPlus, Folder, Plus, X } from "lucide-react";
-import { set } from "date-fns";
+import { updateCategories, createCategory } from "@/lib/services/userService";
+import { toast } from "@/hooks/use-toast";
 
 interface DietCategoriesProps {
   initialCategories: Category[];
@@ -26,29 +27,67 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
     categories.length > 0 ? categories[0].id : ""
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const createCategory = () => {
+  const handleCreateCategory = async () => {
     if (newCategoryName.trim()) {
-      const newCategory: Category = {
-        id: `category-${Date.now()}`,
-        name: newCategoryName.trim(),
-        dietIds: [],
-      };
-      const updatedCategories = [...categories, newCategory];
-      setCategories(updatedCategories);
-      setNewCategoryName("");
-      setActiveCategory(newCategory.id);
-      setIsDialogOpen(false);
+      setIsLoading(true);
+      try {
+        const userData = await createCategory(newCategoryName.trim());
+        
+        // Update local state with the new categories from the database
+        setCategories(userData.categories);
+        
+        // Set the newly created category as active
+        const newCategory = userData.categories[userData.categories.length - 1];
+        setActiveCategory(newCategory.id);
+        
+        setNewCategoryName("");
+        setIsDialogOpen(false);
+        toast({
+          title: "Category created",
+          description: `"${newCategoryName.trim()}" has been created successfully.`,
+        });
+      } catch (error) {
+        console.error("Error creating category:", error);
+        toast({
+          title: "Error",
+          description: "Failed to create category. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const deleteCategory = (categoryId: string) => {
-    const updatedCategories = categories.filter(
-      (category) => category.id !== categoryId
-    );
-    setCategories(updatedCategories);
-    if (activeCategory === categoryId && updatedCategories.length > 0) {
-      setActiveCategory(updatedCategories[0].id);
+  const handleDeleteCategory = async (categoryId: string) => {
+    setIsLoading(true);
+    try {
+      const updatedCategories = categories.filter(
+        (category) => category.id !== categoryId
+      );
+      
+      await updateCategories(updatedCategories);
+      setCategories(updatedCategories);
+      
+      if (activeCategory === categoryId && updatedCategories.length > 0) {
+        setActiveCategory(updatedCategories[0].id);
+      }
+      
+      toast({
+        title: "Category deleted",
+        description: "The category has been deleted successfully.",
+      });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete category. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,9 +98,10 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
     return allDiets.filter((diet) => category.dietIds.includes(diet.id));
   };
 
-  const removeDietFromCategory = (categoryId: string, dietId: string) => {
-    setCategories(
-      categories.map((category) => {
+  const removeDietFromCategory = async (categoryId: string, dietId: string) => {
+    setIsLoading(true);
+    try {
+      const updatedCategories = categories.map((category) => {
         if (category.id === categoryId) {
           return {
             ...category,
@@ -69,8 +109,25 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
           };
         }
         return category;
-      })
-    );
+      });
+      
+      await updateCategories(updatedCategories);
+      setCategories(updatedCategories);
+      
+      toast({
+        title: "Diet removed",
+        description: "The diet has been removed from this category.",
+      });
+    } catch (error) {
+      console.error("Error removing diet from category:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove diet. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -83,8 +140,8 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
               Organize your saved diets into custom categories
             </CardDescription>
           </div>
-          <Dialog>
-            <DialogTrigger onClick={() => setIsDialogOpen(true)} asChild>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
               <Button size="sm" variant="outline" className="gap-1">
                 <FolderPlus className="h-4 w-4" />
                 <span>New Category</span>
@@ -110,7 +167,12 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
                 />
               </div>
               <DialogFooter>
-                <Button disabled={!newCategoryName} onClick={createCategory}>Create Category</Button>
+                <Button 
+                  disabled={!newCategoryName || isLoading} 
+                  onClick={handleCreateCategory}
+                >
+                  {isLoading ? "Creating..." : "Create Category"}
+                </Button>
               </DialogFooter>
             </DialogContent>
             )}
@@ -133,9 +195,6 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
                 >
                   <Folder className="h-4 w-4" />
                   <span>{category.name}</span>
-                  <span className="ml-1 text-xs bg-secondary/70 px-1.5 rounded-full">
-                    {category.dietIds.length}
-                  </span>
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -145,20 +204,25 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
               
               return (
                 <TabsContent key={category.id} value={category.id} className="mt-0">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-medium">{category.name}</h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => deleteCategory(category.id)}
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Delete Category
-                    </Button>
-                  </div>
+                  <ScrollArea className="h-[400px] pr-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <div>
+                        <h3 className="font-semibold">{category.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {categoryDiets.length} {categoryDiets.length === 1 ? 'diet' : 'diets'}
+                        </p>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDeleteCategory(category.id)}
+                        disabled={isLoading}
+                      >
+                        <X className="h-4 w-4 text-muted-foreground" />
+                        <span className="sr-only">Delete Category</span>
+                      </Button>
+                    </div>
 
-                  <ScrollArea className="h-[240px] pr-4">
                     {categoryDiets.length > 0 ? (
                       <div className="space-y-3">
                         {categoryDiets.map((diet) => (
@@ -184,27 +248,26 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
                                 <span className="text-muted-foreground">
                                   {diet.nutritionalFacts.calories} kcal
                                 </span>
-                                <span className="h-1 w-1 rounded-full bg-muted-foreground" />
-                                <span className="text-muted-foreground capitalize">
-                                  {diet.tags[0].replace(/-/g, ' ')}
-                                </span>
                               </div>
                             </div>
                             <Button
                               variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                              size="sm"
                               onClick={() => removeDietFromCategory(category.id, diet.id)}
+                              disabled={isLoading}
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-3 w-3 text-muted-foreground" />
+                              <span className="sr-only">Remove</span>
                             </Button>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                        <Folder className="h-10 w-10 text-muted-foreground mb-2 opacity-40" />
-                        <p className="text-muted-foreground mb-4">This category is empty</p>
+                      <div className="flex flex-col items-center justify-center h-[300px] text-center">
+                        <FolderPlus className="h-12 w-12 text-muted-foreground mb-4 opacity-40" />
+                        <p className="text-muted-foreground mb-4">
+                          This category is empty
+                        </p>
                         <Link href="/diets">
                           <Button variant="outline" size="sm" className="gap-1">
                             <Plus className="h-4 w-4" />
@@ -250,7 +313,12 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
                   />
                 </div>
                 <DialogFooter>
-                  <Button onClick={createCategory}>Create Category</Button>
+                  <Button 
+                    onClick={handleCreateCategory} 
+                    disabled={!newCategoryName || isLoading}
+                  >
+                    {isLoading ? "Creating..." : "Create Category"}
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
