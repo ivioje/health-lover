@@ -30,7 +30,7 @@ export default function RecommendationsPage() {
         
         // Construct query parameters based on user preferences
         const queryParams: any = {
-          number: 9 // Limit to 9 recommendations
+          number: 9 
         };
         
         // Add diet restrictions

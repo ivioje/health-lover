@@ -17,7 +17,6 @@ import {
 } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
 
-// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -30,7 +29,7 @@ ChartJS.register(
   Filler
 );
 
-// Mock data for charts
+// to come real user metrics
 const nutrientData = [
   { name: "Mon", calories: 1800, protein: 90, carbs: 220, fat: 60 },
   { name: "Tue", calories: 2100, protein: 110, carbs: 200, fat: 80 },
@@ -54,7 +53,6 @@ const wellnessData = [
 export function SummaryChart() {
   const [timeRange, setTimeRange] = useState("week");
 
-  // Prepare data for the nutrition bar chart
   const nutritionChartData = {
     labels: nutrientData.map(item => item.name),
     datasets: [
@@ -82,7 +80,6 @@ export function SummaryChart() {
     ],
   };
 
-  // Prepare data for the wellness line chart
   const wellnessChartData = {
     labels: wellnessData.map(item => item.name),
     datasets: [
@@ -98,7 +95,6 @@ export function SummaryChart() {
     ],
   };
 
-  // Common chart options
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,

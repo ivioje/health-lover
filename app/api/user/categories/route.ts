@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import UserModel from '@/lib/models/userModel';
 
-// Create a new category
+//add categories
 export async function POST(request: NextRequest) {
   try {
     await connectToDatabase();
-    
     const searchParams = request.nextUrl.searchParams;
     const email = searchParams.get('email');
     
@@ -15,18 +14,11 @@ export async function POST(request: NextRequest) {
     }
     
     const { name } = await request.json();
-    
     if (!name) {
       return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
     }
     
-    // Create new category with unique ID
-    const category = {
-      name,
-      dietIds: [],
-    };
-    
-    // Add category to user's categories
+    const category = { name, dietIds: [] };
     const updatedUser = await UserModel.findOneAndUpdate(
       { email },
       { 
@@ -61,7 +53,6 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Categories array is required' }, { status: 400 });
     }
     
-    // Update all categories
     const updatedUser = await UserModel.findOneAndUpdate(
       { email },
       { 

@@ -1,43 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Diet, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Check, 
-  Heart, 
-  Plus, 
-  Folder, 
-  FolderPlus
-} from "lucide-react";
-import { mockCategories } from "@/lib/data";
+import { Check, Heart, Plus, Folder, FolderPlus } from "lucide-react";
+import { getUserData, createCategory as createCategoryAPI, updateCategories } from "@/lib/services/userService";
+import { toast } from "@/hooks/use-toast";
 
 interface DietDetailProps {
   diet: Diet;
@@ -45,17 +22,30 @@ interface DietDetailProps {
 
 export function DietDetail({ diet }: DietDetailProps) {
   const [isSaved, setIsSaved] = useState(false);
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const toggleSave = () => {
-    setIsSaved(!isSaved);
-  };
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const user = await getUserData();
+        setCategories(user.categories || []);
+      } catch (e) {
+        toast({
+          title: "Failed to load categories",
+        })
+        
+      }
+    };
+    fetchCategories();
+  }, []);
 
-  const addToCategory = (categoryId: string) => {
-    setCategories(
-      categories.map((category) => {
+  const addToCategory = async (categoryId: string) => {
+    setLoading(true);
+    try {
+      const updatedCategories = categories.map((category) => {
         if (category.id === categoryId) {
           return {
             ...category,
@@ -65,13 +55,18 @@ export function DietDetail({ diet }: DietDetailProps) {
           };
         }
         return category;
-      })
-    );
+      });
+      await updateCategories(updatedCategories);
+      setCategories(updatedCategories);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeFromCategory = (categoryId: string) => {
-    setCategories(
-      categories.map((category) => {
+  const removeFromCategory = async (categoryId: string) => {
+    setLoading(true);
+    try {
+      const updatedCategories = categories.map((category) => {
         if (category.id === categoryId) {
           return {
             ...category,
@@ -79,23 +74,52 @@ export function DietDetail({ diet }: DietDetailProps) {
           };
         }
         return category;
-      })
-    );
-  };
-
-  const createCategory = () => {
-    if (newCategoryName.trim()) {
-      const newCategory: Category = {
-        id: `new-${Date.now()}`,
-        name: newCategoryName.trim(),
-        dietIds: [diet.id],
-      };
-      setCategories([...categories, newCategory]);
-      setNewCategoryName("");
-      setDialogOpen(false);
+      });
+      await updateCategories(updatedCategories);
+      setCategories(updatedCategories);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const createCategory = async () => {
+    if (newCategoryName.trim()) {
+      setLoading(true);
+      try {
+        const user = await createCategoryAPI(newCategoryName.trim());
+        const newCat = user.categories[user.categories.length - 1];
+        const updatedCategories = user.categories.map((cat) =>
+          cat.id === newCat.id
+            ? { ...cat, dietIds: [...cat.dietIds, diet.id] }
+            : cat
+        );
+        await updateCategories(updatedCategories);
+        setCategories(updatedCategories);
+        setNewCategoryName("");
+        setDialogOpen(false);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const deleteCategory = async (categoryId: string) => {
+    setLoading(true);
+    try {
+      const updatedCategories = categories.filter((cat) => cat.id !== categoryId);
+      await updateCategories(updatedCategories);
+      setCategories(updatedCategories);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  function toggleSave(): void {
+    setIsSaved((prev) => !prev);
+    toast({
+      title: isSaved ? "Diet removed from saved" : "Diet saved successfully",
+    });
+  }
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-3 sm:px-10 md:px-16">
       <div className="lg:col-span-2 space-y-8">
@@ -245,6 +269,7 @@ export function DietDetail({ diet }: DietDetailProps) {
                             ) : (
                               <Plus className="h-4 w-4 text-muted-foreground" />
                             )}
+                            <Button variant="ghost" onClick={() => deleteCategory(category.id)} disabled={loading}>Delete</Button>
                           </div>
                         );
                       })}

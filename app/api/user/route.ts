@@ -7,7 +7,6 @@ export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
     
-    // Get email from query params
     const searchParams = request.nextUrl.searchParams;
     const email = searchParams.get('email');
     
@@ -15,14 +14,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Email parameter is required' }, { status: 400 });
     }
     
-    // Try to find the user by email
     let user = await UserModel.findOne({ email });
     
-    // If user doesn't exist, create a new one with minimal default data
     if (!user) {
       user = await UserModel.create({
         email,
-        name: email.split('@')[0], // Default name from email
+        name: email.split('@')[0],
         preferences: {
           dietaryRestrictions: [],
           healthGoals: [],

@@ -9,11 +9,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Icons } from "@/components/ui/icons";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -132,7 +132,7 @@ export default function LoginPage() {
                 Sign in with Google
               </Button>
               
-              <Button 
+              {/* <Button 
                 variant="outline" 
                 type="button" 
                 className="w-full" 
@@ -145,7 +145,7 @@ export default function LoginPage() {
                   <Icons.gitHub className="mr-2 h-4 w-4" />
                 )}
                 Sign in with GitHub
-              </Button>
+              </Button> */}
             </div>
 
             <div className="relative my-6">
@@ -195,7 +195,7 @@ export default function LoginPage() {
                       </div>
                       <FormControl>
                         <Input 
-                          placeholder="••••••••" 
+                          placeholder="" 
                           type="password" 
                           {...field} 
                           disabled={isLoading}

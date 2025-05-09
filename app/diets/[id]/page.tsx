@@ -1,9 +1,7 @@
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import DietDetailClient from "@/components/diets/diet-detail-client";
 
-// Since we're removing local data, we'll use a minimal generateStaticParams function
 export function generateStaticParams() {
   return [];
 }
@@ -13,7 +11,6 @@ export default async function DietDetailPage({
 }: {
   params: { id: string };
 }) {
-  // Next.js 14 requires awaiting dynamic parameters
   const id = await params.id;
   
   return (

@@ -43,7 +43,7 @@ export default function DashboardPage() {
     // Create array to hold recommended diet IDs 
     let recommendedIds: string[] = [];
     
-    // Sample logic for recommendations
+    // to be done with an ML model
     if (dietaryRestrictions.includes('gluten-free')) {
       recommendedIds.push('4', '5'); // Plant-based and Paleo diets
     }

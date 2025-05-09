@@ -27,19 +27,16 @@ export default function SavedDiets({ savedIds }: SavedDietsProps) {
   }, [savedIds]);
   
   const handleRemoveDiet = async (dietId: string, event: React.MouseEvent) => {
-    event.preventDefault(); // Prevent navigation
-    event.stopPropagation(); // Stop the event from bubbling up
+    event.preventDefault();
+    event.stopPropagation();
     
     setIsLoading(true);
     try {
       await removeSavedDiet(dietId);
-      // We don't update state directly here as it will be handled
-      // by the parent component when it re-fetches user data
       toast({
         title: "Diet removed",
         description: "The diet has been removed from your saved diets.",
       });
-      // Remove from local state for immediate UI update
       setSavedDiets(savedDiets.filter(diet => diet.id !== dietId));
     } catch (error) {
       console.error("Error removing saved diet:", error);

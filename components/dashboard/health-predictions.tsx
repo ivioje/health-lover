@@ -1,16 +1,17 @@
 "use client";
 
 import { HealthPrediction } from "@/lib/types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface HealthPredictionsProps {
   predictions: HealthPrediction[];
 }
 
+// to come from ML model
 export function HealthPredictions({ predictions }: HealthPredictionsProps) {
-  // Helper to determine icon based on risk level
+  // determine icon based on risk level
   const getRiskIcon = (risk: string) => {
     switch (risk) {
       case "low":
@@ -24,7 +25,7 @@ export function HealthPredictions({ predictions }: HealthPredictionsProps) {
     }
   };
 
-  // Helper to determine progress color based on risk level
+  // determine progress color based on risk level
   const getProgressColor = (risk: string) => {
     switch (risk) {
       case "low":

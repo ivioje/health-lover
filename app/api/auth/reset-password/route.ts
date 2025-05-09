@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
     
     await connectToDatabase();
     
-    // Find user with the reset token that hasn't expired
     const user = await UserModel.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: new Date() }
@@ -35,11 +34,8 @@ export async function POST(request: NextRequest) {
         message: 'Password reset token is invalid or has expired' 
       }, { status: 400 });
     }
+     const hashedPassword = await hashPassword(password);
     
-    // Hash the new password
-    const hashedPassword = await hashPassword(password);
-    
-    // Update user's password and clear reset token fields
     user.password = hashedPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;

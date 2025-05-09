@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import UserModel from '@/lib/models/userModel';
-import { 
-  generatePasswordResetToken, 
-  createEmailTransporter, 
-  createPasswordResetEmailOptions 
-} from '@/lib/auth/auth-utils';
+import { generatePasswordResetToken, createEmailTransporter, createPasswordResetEmailOptions } from '@/lib/auth/auth-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,11 +12,8 @@ export async function POST(request: NextRequest) {
     }
     
     await connectToDatabase();
-    
-    // Find user by email
     const user = await UserModel.findOne({ email });
     
-    // Don't reveal if the user exists or not (security best practice)
     if (!user) {
       return NextResponse.json({ 
         success: true, 
@@ -28,18 +21,16 @@ export async function POST(request: NextRequest) {
       });
     }
     
-    // Generate reset token and expiry
     const resetToken = generatePasswordResetToken();
     const resetExpires = new Date();
-    resetExpires.setHours(resetExpires.getHours() + 1); // Token expires in 1 hour
+    resetExpires.setHours(resetExpires.getHours() + 1); // Token valid for 1 hour
     
-    // Update user with reset token
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = resetExpires;
     await user.save();
     
     // Send reset email
-    const resetUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/auth/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`;
     const emailTransporter = createEmailTransporter();
     const emailOptions = createPasswordResetEmailOptions(email, resetUrl);
     

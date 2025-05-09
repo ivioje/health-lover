@@ -9,11 +9,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Icons } from "@/components/ui/icons";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -133,7 +133,7 @@ export default function SignUpPage() {
                 Sign up with Google
               </Button>
               
-              <Button 
+              {/* <Button 
                 variant="outline" 
                 type="button" 
                 className="w-full" 
@@ -146,7 +146,7 @@ export default function SignUpPage() {
                   <Icons.gitHub className="mr-2 h-4 w-4" />
                 )}
                 Sign up with GitHub
-              </Button>
+              </Button> */}
             </div>
 
             <div className="relative my-6">
@@ -205,7 +205,7 @@ export default function SignUpPage() {
                       <FormLabel>Password</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="••••••••" 
+                          placeholder="" 
                           type="password" 
                           {...field} 
                           disabled={isLoading}
@@ -223,7 +223,7 @@ export default function SignUpPage() {
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="••••••••" 
+                          placeholder="" 
                           type="password" 
                           {...field} 
                           disabled={isLoading}

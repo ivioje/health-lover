@@ -13,22 +13,17 @@ export async function GET(request: NextRequest) {
     }
     
     await connectToDatabase();
-    
-    // Find user with the verification token
     const user = await UserModel.findOne({ verificationToken: token });
     
     if (!user) {
       return NextResponse.json({ success: false, message: 'Invalid verification token' }, { status: 400 });
     }
     
-    // Check if already verified
     if (user.emailVerified) {
       return NextResponse.json({ success: true, message: 'Email already verified' });
     }
-    
-    // Update user to mark as verified
     user.emailVerified = new Date();
-    user.verificationToken = undefined; // Remove the token
+    user.verificationToken = undefined;
     await user.save();
     
     return NextResponse.json({ 
@@ -47,10 +42,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(req: Request) {
   try {
-    // Connect to the database
     await connectToDatabase();
-
-    // Get the token from the request body
     const { token } = await req.json();
 
     if (!token) {
@@ -60,7 +52,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Find the user with the verification token
     const user = await User.findOne({
       verificationToken: token,
       verificationTokenExpiry: { $gt: Date.now() },
@@ -73,7 +64,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Update the user's email verification status
     user.isVerified = true;
     user.verificationToken = undefined;
     user.verificationTokenExpiry = undefined;

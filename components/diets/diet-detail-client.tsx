@@ -60,7 +60,7 @@ export default function DietDetailClient({ dietId }: DietDetailClientProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-3 sm:px-10 md:px-16">
       <Link href="/diets" passHref>
         <Button variant="outline" size="sm" className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Diet Gallery

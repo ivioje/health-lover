@@ -5,7 +5,6 @@ import UserModel from '@/lib/models/userModel';
 export async function PUT(request: NextRequest) {
   try {
     await connectToDatabase();
-    
     const searchParams = request.nextUrl.searchParams;
     const email = searchParams.get('email');
     
@@ -14,8 +13,6 @@ export async function PUT(request: NextRequest) {
     }
     
     const preferences = await request.json();
-    
-    // Update user preferences
     const updatedUser = await UserModel.findOneAndUpdate(
       { email },
       { 

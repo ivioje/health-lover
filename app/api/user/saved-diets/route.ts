@@ -14,12 +14,10 @@ export async function POST(request: NextRequest) {
     }
     
     const { dietId } = await request.json();
-    
     if (!dietId) {
       return NextResponse.json({ error: 'Diet ID is required' }, { status: 400 });
     }
     
-    // Add diet to saved diets (if not already present)
     const updatedUser = await UserModel.findOneAndUpdate(
       { email },
       { 
@@ -51,8 +49,6 @@ export async function DELETE(request: NextRequest) {
     if (!dietId) {
       return NextResponse.json({ error: 'Diet ID parameter is required' }, { status: 400 });
     }
-    
-    // Remove diet from saved diets
     const updatedUser = await UserModel.findOneAndUpdate(
       { email },
       { 

@@ -18,17 +18,14 @@ export function DietGallery() {
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
   
-  // Filter parameters
   const [proteinMin, setProteinMin] = useState("5");
   const [proteinMax, setProteinMax] = useState("30");
   const [carbsMax, setCarbsMax] = useState("20");
   const [caloriesMax, setCaloriesMax] = useState("500");
   
-  // Load initial API data on component mount
   useEffect(() => {
     loadInitialApiData();
   }, []);
@@ -108,7 +105,6 @@ export function DietGallery() {
     }
   });
   
-  // Search API for keto diets
   const searchApiDiets = async () => {
     setLoading(true);
     setError(null);
@@ -125,10 +121,10 @@ export function DietGallery() {
       
       if (response && Array.isArray(response)) {
         const mappedDiets = response
-          .filter(diet => diet && diet.recipe) // Filter out items without a recipe name
+          .filter(diet => diet && diet.recipe)
           .map((diet: KetoDiet) => mapKetoDietToAppDiet(diet));
         setApiDiets(mappedDiets);
-        setCurrentPage(1); // Reset to first page
+        setCurrentPage(1);
       } else {
         setApiDiets([]);
         setError("No results found or invalid response format");

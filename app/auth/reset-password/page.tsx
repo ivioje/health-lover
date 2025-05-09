@@ -95,7 +95,6 @@ export default function ResetPasswordPage() {
       if (response.ok) {
         setSuccess(true);
         form.reset();
-        // Redirect to login page after 3 seconds
         setTimeout(() => {
           router.push("/auth/login");
         }, 3000);
@@ -109,7 +108,6 @@ export default function ResetPasswordPage() {
     }
   };
 
-  // Show loading state while validating the token
   if (validating) {
     return (
       <div className="container py-10 flex justify-center">
@@ -208,7 +206,7 @@ export default function ResetPasswordPage() {
                       <FormLabel>New Password</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="••••••••" 
+                          placeholder="" 
                           type="password" 
                           {...field} 
                           disabled={isLoading || success}
@@ -226,7 +224,7 @@ export default function ResetPasswordPage() {
                       <FormLabel>Confirm New Password</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="••••••••" 
+                          placeholder="" 
                           type="password" 
                           {...field} 
                           disabled={isLoading || success}

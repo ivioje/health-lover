@@ -4,16 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Diet } from "@/lib/types";
 import { diets as allDiets } from "@/lib/data";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ShieldCheck, ArrowRight } from "lucide-react";
 import Image from "next/image";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface RecommendedDietsProps {
   recommendedIds: string[];
 }
 
+// to come from ML model
 export function RecommendedDiets({ recommendedIds }: RecommendedDietsProps) {
   const [recommendedDiets, setRecommendedDiets] = useState<Diet[]>([]);
 

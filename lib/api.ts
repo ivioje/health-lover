@@ -168,7 +168,6 @@ export function generateDietTags(diet: KetoDiet): string[] {
 export function extractIngredients(diet: KetoDiet): string[] {
   const ingredients = [];
   
-  // Loop through the possible ingredients (1-10)
   for (let i = 1; i <= 10; i++) {
     const measurementKey = `measurement_${i}` as keyof KetoDiet;
     const ingredientKey = `ingredient_${i}` as keyof KetoDiet;
@@ -192,7 +191,6 @@ export function extractIngredients(diet: KetoDiet): string[] {
 export function extractDirections(diet: KetoDiet): string[] {
   const directions = [];
   
-  // Loop through the possible directions (1-10)
   for (let i = 1; i <= 10; i++) {
     const directionKey = `directions_step_${i}` as keyof KetoDiet;
     const direction = diet[directionKey];
