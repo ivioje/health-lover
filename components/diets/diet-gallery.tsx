@@ -6,12 +6,17 @@ import { DietCard } from "@/components/diets/diet-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, X } from "lucide-react";
-import { searchKetoDiets, mapKetoDietToAppDiet, KetoDiet, SearchParams } from "@/lib/api";
+import { searchKetoDiets, mapKetoDietToAppDiet } from "@/lib/api";
+import { SearchParams, KetoDiet } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 
-export function DietGallery() {
+interface DietGalleryProps {
+  diets: Diet[];
+}
+
+export function DietGallery({ diets }: DietGalleryProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [apiDiets, setApiDiets] = useState<Diet[]>([]);
   const [loading, setLoading] = useState(false);
