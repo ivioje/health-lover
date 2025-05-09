@@ -1,31 +1,5 @@
 import { Brain, Heart, ChefHat, PieChart } from "lucide-react";
-
-const features = [
-  {
-    title: "AI Health Predictions",
-    description:
-      "Our advanced AI models analyze your diet and lifestyle to predict potential health risks with remarkable accuracy.",
-    icon: Brain,
-  },
-  {
-    title: "Personalized Diet Plans",
-    description:
-      "Receive custom dietary recommendations tailored to your unique body, preferences, and health goals.",
-    icon: Heart,
-  },
-  {
-    title: "Nutritional Analysis",
-    description:
-      "Get detailed breakdowns of macro and micronutrients to ensure a balanced and optimal diet.",
-    icon: PieChart,
-  },
-  {
-    title: "Curated Recipes",
-    description:
-      "Discover delicious recipes that match your dietary preferences and nutritional requirements.",
-    icon: ChefHat,
-  },
-];
+import { features } from "@/lib/data";
 
 export function FeaturesSection() {
   return (

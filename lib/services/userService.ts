@@ -1,7 +1,6 @@
 import { UserProfile, UserPreference, Category } from '../types';
 import { getSession } from 'next-auth/react';
 
-// Get the current user email from the authenticated session
 export const getCurrentUserEmail = async (): Promise<string> => {
   if (typeof window !== 'undefined') {
     const session = await getSession();
@@ -12,20 +11,17 @@ export const getCurrentUserEmail = async (): Promise<string> => {
     
     throw new Error('User not authenticated');
   }
-  return ''; // Empty string for server-side
+  return '';
 };
 
-// Get user data from API
 export const getUserData = async (): Promise<UserProfile> => {
   try {
     const session = await getSession();
-    
     if (!session?.user?.email) {
       throw new Error('User not authenticated');
     }
     
     const email = session.user.email;
-    
     const response = await fetch(`/api/user?email=${encodeURIComponent(email)}`);
     
     if (!response.ok) {
@@ -40,7 +36,6 @@ export const getUserData = async (): Promise<UserProfile> => {
   }
 };
 
-// Update user preferences
 export const updateUserPreferences = async (preferences: UserPreference): Promise<UserProfile> => {
   try {
     const session = await getSession();
@@ -50,7 +45,6 @@ export const updateUserPreferences = async (preferences: UserPreference): Promis
     }
     
     const email = session.user.email;
-    
     const response = await fetch(`/api/user/preferences?email=${encodeURIComponent(email)}`, {
       method: 'PUT',
       headers: {
@@ -70,7 +64,6 @@ export const updateUserPreferences = async (preferences: UserPreference): Promis
   }
 };
 
-// Save a diet
 export const saveDiet = async (dietId: string): Promise<UserProfile> => {
   try {
     const session = await getSession();
@@ -80,7 +73,6 @@ export const saveDiet = async (dietId: string): Promise<UserProfile> => {
     }
     
     const email = session.user.email;
-    
     const response = await fetch(`/api/user/saved-diets?email=${encodeURIComponent(email)}`, {
       method: 'POST',
       headers: {
@@ -100,7 +92,6 @@ export const saveDiet = async (dietId: string): Promise<UserProfile> => {
   }
 };
 
-// Remove a saved diet
 export const removeSavedDiet = async (dietId: string): Promise<UserProfile> => {
   try {
     const session = await getSession();
@@ -126,7 +117,6 @@ export const removeSavedDiet = async (dietId: string): Promise<UserProfile> => {
   }
 };
 
-// Create a new category
 export const createCategory = async (name: string): Promise<UserProfile> => {
   try {
     const session = await getSession();
@@ -156,7 +146,6 @@ export const createCategory = async (name: string): Promise<UserProfile> => {
   }
 };
 
-// Update all categories
 export const updateCategories = async (categories: Category[]): Promise<UserProfile> => {
   try {
     const session = await getSession();

@@ -5,7 +5,6 @@ import { Heart, Brain, LineChart, Activity } from "lucide-react";
 export function HeroSection() {
   return (
     <div className="relative overflow-hidden">
-      {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-background to-background/60 dark:from-background dark:to-background/60 -z-10" />
       
       {/* Floating circles decoration */}

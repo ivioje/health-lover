@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { KetoDiet, SearchParams } from './types';
 
 const RAPID_API_KEY = process.env.NEXT_PUBLIC_RAPIDAPI_KEY;
 
@@ -10,77 +11,6 @@ const ketoApi = axios.create({
     'x-rapidapi-host': 'keto-diet.p.rapidapi.com',
   },
 });
-
-export interface KetoDiet {
-  id: number;
-  recipe: string;
-  category?: {
-    id: number;
-    category: string;
-    thumbnail: string;
-  };
-  prep_time_in_minutes?: number;
-  cook_time_in_minutes?: number;
-  difficulty?: string;
-  serving?: number;
-  measurement_1?: string | number;
-  measurement_2?: string | number;
-  measurement_3?: string | number;
-  measurement_4?: string | number;
-  measurement_5?: string | number;
-  measurement_6?: string | number;
-  measurement_7?: string | number;
-  measurement_8?: string | number;
-  measurement_9?: string | number;
-  measurement_10?: string | number;
-  ingredient_1?: string;
-  ingredient_2?: string;
-  ingredient_3?: string;
-  ingredient_4?: string;
-  ingredient_5?: string;
-  ingredient_6?: string;
-  ingredient_7?: string;
-  ingredient_8?: string;
-  ingredient_9?: string;
-  ingredient_10?: string;
-  directions_step_1?: string;
-  directions_step_2?: string;
-  directions_step_3?: string;
-  directions_step_4?: string;
-  directions_step_5?: string;
-  directions_step_6?: string;
-  directions_step_7?: string;
-  directions_step_8?: string;
-  directions_step_9?: string;
-  directions_step_10?: string;
-  image?: string;
-  calories?: number;
-  fat_in_grams?: number;
-  carbohydrates_in_grams?: number;
-  protein_in_grams?: number;
-}
-
-export interface SearchParams {
-  query?: string;
-  diet?: string;
-  intolerances?: string;
-  type?: string;
-  number?: number;
-  offset?: number;
-  sort?: string;
-  protein_in_grams__lt?: string;
-  protein_in_grams__gt?: string;
-  calories__lt?: string;
-  calories__gt?: string;
-  carbohydrates_in_grams__lt?: string;
-  carbohydrates_in_grams__gt?: string;
-  fat_in_grams__lt?: string;
-  fat_in_grams__gt?: string;
-  sugar_in_grams__lt?: string;
-  sugar_in_grams__gt?: string;
-  fiber_in_grams__lt?: string;
-  fiber_in_grams__gt?: string;
-}
 
 export async function searchDiets(params: SearchParams) {
   try {
@@ -137,7 +67,6 @@ export async function getKetoDietById(id: number) {
   }
 }
 
-// Helper function to generate tags based on nutritional values
 export function generateDietTags(diet: KetoDiet): string[] {
   const tags: string[] = ['keto'];
   
@@ -203,7 +132,6 @@ export function extractDirections(diet: KetoDiet): string[] {
   return directions;
 }
 
-// Helper function to map KetoDiet to your application's Diet type
 export function mapKetoDietToAppDiet(ketoDiet: KetoDiet) {
   const tags = generateDietTags(ketoDiet);
   const ingredients = extractIngredients(ketoDiet);

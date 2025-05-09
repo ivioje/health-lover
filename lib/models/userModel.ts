@@ -1,7 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { UserProfile } from '../types';
 
-// Define the schema for health predictions
 const HealthPredictionSchema = new Schema({
   condition: String,
   risk: {
@@ -12,7 +10,7 @@ const HealthPredictionSchema = new Schema({
   description: String,
 });
 
-// Define the schema for user preferences
+// schema for user preferences
 const PreferenceSchema = new Schema({
   dietaryRestrictions: [String],
   healthGoals: [String],
@@ -20,13 +18,13 @@ const PreferenceSchema = new Schema({
   age: Number,
 });
 
-// Define the schema for categories
+// schema for categories
 const CategorySchema = new Schema({
   name: String,
   dietIds: [String],
 });
 
-// Define the user schema
+// user schema
 const UserSchema = new Schema({
   name: String,
   email: {
@@ -48,5 +46,4 @@ const UserSchema = new Schema({
   },
 });
 
-// Create and export the model
 export default mongoose.models.User || mongoose.model('User', UserSchema);

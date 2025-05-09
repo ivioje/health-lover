@@ -7,21 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { dietaryRestrictionOptions, healthGoalOptions } from "@/lib/data";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { updateUserPreferences } from "@/lib/services/userService";
@@ -33,23 +21,6 @@ const formSchema = z.object({
   dietaryRestrictions: z.array(z.string()).optional(),
   healthGoals: z.array(z.string()).optional(),
 });
-
-const dietaryRestrictionOptions = [
-  { id: "gluten-free", label: "Gluten Free" },
-  { id: "dairy-free", label: "Dairy Free" },
-  { id: "vegetarian", label: "Vegetarian" },
-  { id: "vegan", label: "Vegan" },
-  { id: "nut-free", label: "Nut Free" },
-  { id: "low-sodium", label: "Low Sodium" },
-];
-
-const healthGoalOptions = [
-  { id: "weight-loss", label: "Weight Loss" },
-  { id: "muscle-gain", label: "Muscle Gain" },
-  { id: "maintenance", label: "Maintenance" },
-  { id: "increase-energy", label: "Increase Energy" },
-  { id: "improve-digestion", label: "Improve Digestion" },
-];
 
 interface PreferenceFormProps {
   initialPreferences: {

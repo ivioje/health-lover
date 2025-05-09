@@ -2,17 +2,15 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { routes } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Heart, Menu, X, Salad, Home, BarChart2, User, LogOut } from "lucide-react";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -30,13 +28,6 @@ import {
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: session, status } = useSession();
-
-  const routes = [
-    { name: "Home", href: "/", icon: Home },
-    { name: "Diet Gallery", href: "/diets", icon: Salad },
-    { name: "Dashboard", href: "/dashboard", icon: BarChart2 },
-    { name: "Preferences", href: "/preferences", icon: User },
-  ];
 
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/80 border-b border-border/40 py-3 px-3 sm:px-10 md:py-6 md:px-16">
@@ -56,9 +47,9 @@ export function Navigation() {
         {/* Desktop Navigation */}
         <NavigationMenu className="hidden md:flex">
           <NavigationMenuList>
-            {routes.map((route) => (
+            {!routes.some(route => route.name === 'Dashboard') && routes.map((route) => (
               <NavigationMenuItem key={route.name}>
-                <Link href={route.href} legacyBehavior passHref>
+                <Link href={route.href} passHref>
                   <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                     {route.name}
                   </NavigationMenuLink>

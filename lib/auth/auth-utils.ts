@@ -26,7 +26,7 @@ export const createEmailTransporter = () => {
   const isProduction = process.env.NODE_ENV === 'production';
   
   if (isProduction) {
-    // Production email service (e.g., SendGrid, AWS SES, etc.)
+    // Production email service
     return nodemailer.createTransport({
       host: process.env.EMAIL_SERVER_HOST,
       port: Number(process.env.EMAIL_SERVER_PORT),
@@ -37,21 +37,20 @@ export const createEmailTransporter = () => {
       secure: true,
     });
   } else {
-    // Development email service (ethereal.email for testing)
+    // Development email service
     return nodemailer.createTransport({
       host: 'smtp.ethereal.email',
       port: 587,
       auth: {
-        user: process.env.DEV_EMAIL_USER || 'your-ethereal-user',
-        pass: process.env.DEV_EMAIL_PASSWORD || 'your-ethereal-password',
+        user: process.env.DEV_EMAIL_USER,
+        pass: process.env.DEV_EMAIL_PASSWORD,
       },
     });
   }
 };
 
-// Email templates
 export const createVerificationEmailOptions = (to: string, verificationUrl: string) => {
-  const appName = process.env.APP_NAME || 'Health Lover';
+  const appName = process.env.APP_NAME || 'HealthLover';
   
   return {
     from: `${appName} <${process.env.EMAIL_FROM || 'noreply@healthlover.com'}>`,
@@ -78,7 +77,7 @@ export const createVerificationEmailOptions = (to: string, verificationUrl: stri
 };
 
 export const createPasswordResetEmailOptions = (to: string, resetUrl: string) => {
-  const appName = process.env.APP_NAME || 'Health Lover';
+  const appName = process.env.APP_NAME || 'HealthLover';
   
   return {
     from: `${appName} <${process.env.EMAIL_FROM || 'noreply@healthlover.com'}>`,
