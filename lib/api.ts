@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-// Environment variables should be used for API keys in production
-const RAPID_API_KEY = process.env.NEXT_PUBLIC_RAPIDAPI_KEY || 'bb8d917516mshaa036c058796f3cp1baebejsn6ce9e216d638';
-const RAPID_API_HOST = 'keto-diet.p.rapidapi.com';
+const RAPID_API_KEY = process.env.NEXT_PUBLIC_RAPIDAPI_KEY;
 
 
 const ketoApi = axios.create({
@@ -25,7 +23,6 @@ export interface KetoDiet {
   cook_time_in_minutes?: number;
   difficulty?: string;
   serving?: number;
-  // Ingredients (up to 10)
   measurement_1?: string | number;
   measurement_2?: string | number;
   measurement_3?: string | number;
@@ -46,7 +43,6 @@ export interface KetoDiet {
   ingredient_8?: string;
   ingredient_9?: string;
   ingredient_10?: string;
-  // Directions (up to 10)
   directions_step_1?: string;
   directions_step_2?: string;
   directions_step_3?: string;
@@ -125,8 +121,6 @@ export async function searchKetoDiets(params: SearchParams = {}) {
   }
 }
 
-// For detailed diet information, we might need to filter from the main list
-// since the API doesn't seem to have a specific endpoint for individual items
 export async function getKetoDietById(id: number) {
   try {
     const response = await ketoApi.get('/');
