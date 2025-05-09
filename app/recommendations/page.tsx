@@ -48,7 +48,7 @@ export default function RecommendationsPage() {
         }
         
         // Make parallel API calls for both diet types
-        const [spoonacularResults, ketoResults] = await Promise.all([
+        const [ketoResults] = await Promise.all([
           searchDiets(queryParams)
             .then(data => data.results.map((item: any) => ({
               id: item.id.toString(),
@@ -69,7 +69,7 @@ export default function RecommendationsPage() {
               tags: item.diets || [],
             })))
             .catch(err => {
-              console.error('Error fetching from Spoonacular API:', err);
+              console.error('Error fetching from API:', err);
               return [];
             }),
           searchKetoDiets({ number: 3 })
@@ -81,7 +81,7 @@ export default function RecommendationsPage() {
         ]);
         
         // Combine results and sort by relevance to user preferences
-        const combinedResults = [...spoonacularResults, ...ketoResults];
+        const combinedResults = [...ketoResults];
         
         // If we have results, set them
         if (combinedResults.length > 0) {

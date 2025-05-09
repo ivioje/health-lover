@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Diet, Category } from "@/lib/types";
-import { diets as allDiets } from "@/lib/data";
+import { searchKetoDiets, mapKetoDietToAppDiet } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FolderPlus, Folder, Plus, X } from "lucide-react";
-import { updateCategories, createCategory } from "@/lib/services/userService";
+import { updateCategories, createCategory, getUserData } from "@/lib/services/userService";
 import { toast } from "@/hooks/use-toast";
 
 interface DietCategoriesProps {
@@ -21,13 +21,95 @@ interface DietCategoriesProps {
 }
 
 export function DietCategories({ initialCategories }: DietCategoriesProps) {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [categories, setCategories] = useState<Category[]>(initialCategories || []);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>(
-    categories.length > 0 ? categories[0].id : ""
+    categories.length > 0 ? categories[0]?.id : ""
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [diets, setDiets] = useState<Diet[]>([]);
+  const [dietsLoading, setDietsLoading] = useState(true);
+
+  // Fetch diets from API when component mounts
+  useEffect(() => {
+    const fetchDiets = async () => {
+      setDietsLoading(true);
+      try {
+        // Get all user data which includes saved diets
+        const userData = await getUserData();
+        
+        // Collect diet IDs from all categories
+        const allDietIds = new Set<string>();
+        categories.forEach(category => {
+          if (category.dietIds) {
+            category.dietIds.forEach(id => allDietIds.add(id));
+          }
+        });
+        
+        if (allDietIds.size === 0) {
+          setDiets([]);
+          setDietsLoading(false);
+          return;
+        }
+
+        // If user has saved diets, use those first
+        const userSavedDiets = userData.savedDiets || [];
+        const dietsList: Diet[] = userSavedDiets.map((dietId) => {
+          const diet = diets.find((d) => d.id === dietId);
+          return diet || { 
+            id: dietId, 
+            name: "Unknown Diet", 
+            imageUrl: "", 
+            nutritionalFacts: { 
+              calories: 0, 
+              protein: 0, 
+              carbs: 0, 
+              fat: 0 
+            }, 
+            description: "No description available", 
+            tags: [], 
+            benefits: [], 
+            sampleMeals: [] 
+          };
+        });
+        
+        // For any diet IDs not found in user's saved diets, fetch from Keto API
+        const userDietIds = new Set(userSavedDiets);
+        const missingDietIds = Array.from(allDietIds).filter(id => !userDietIds.has(id));
+        
+        if (missingDietIds.length > 0) {
+          try {
+            // Fetch all Keto diets
+            const ketoDiets = await searchKetoDiets();
+            
+            // Find the ones that match our missing IDs
+            for (const id of missingDietIds) {
+              const ketoDiet = ketoDiets.find((d: { id: { toString: () => string; }; }) => d.id.toString() === id);
+              if (ketoDiet) {
+                dietsList.push(mapKetoDietToAppDiet(ketoDiet));
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching keto diets:", error);
+          }
+        }
+        
+        setDiets(dietsList);
+      } catch (error) {
+        console.error("Error fetching diets:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load diet information",
+          variant: "destructive",
+        });
+      } finally {
+        setDietsLoading(false);
+      }
+    };
+
+    fetchDiets();
+  }, [categories]);
 
   const handleCreateCategory = async () => {
     if (newCategoryName.trim()) {
@@ -93,9 +175,9 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
 
   const getDietsForCategory = (categoryId: string): Diet[] => {
     const category = categories.find((c) => c.id === categoryId);
-    if (!category) return [];
+    if (!category || !category.dietIds) return [];
     
-    return allDiets.filter((diet) => category.dietIds.includes(diet.id));
+    return diets.filter((diet) => category.dietIds.includes(diet.id));
   };
 
   const removeDietFromCategory = async (categoryId: string, dietId: string) => {
@@ -130,158 +212,20 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
     }
   };
 
-  return (
-    <Card className="bg-card/80 backdrop-blur-sm border border-border/50">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>My Diet Categories</CardTitle>
-            <CardDescription>
-              Organize your saved diets into custom categories
-            </CardDescription>
+  if (categories.length === 0) {
+    return (
+      <Card className="bg-card/80 backdrop-blur-sm border border-border/50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>My Diet Categories</CardTitle>
+              <CardDescription>
+                Organize your saved diets into custom categories
+              </CardDescription>
+            </div>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="gap-1">
-                <FolderPlus className="h-4 w-4" />
-                <span>New Category</span>
-              </Button>
-            </DialogTrigger>
-            {isDialogOpen && (
-              <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Category</DialogTitle>
-                <DialogDescription>
-                  Add a name for your new diet category.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-4">
-                <Label htmlFor="category-name" className="mb-2 block">
-                  Category Name
-                </Label>
-                <Input
-                  id="category-name"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="e.g., Weekday Lunches"
-                />
-              </div>
-              <DialogFooter>
-                <Button 
-                  disabled={!newCategoryName || isLoading} 
-                  onClick={handleCreateCategory}
-                >
-                  {isLoading ? "Creating..." : "Create Category"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-            )}
-          </Dialog>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {categories.length > 0 ? (
-          <Tabs 
-            value={activeCategory} 
-            onValueChange={setActiveCategory}
-            className="w-full"
-          >
-            <TabsList className="w-full justify-start mb-4 overflow-x-auto py-1 bg-transparent">
-              {categories.map((category) => (
-                <TabsTrigger
-                  key={category.id}
-                  value={category.id}
-                  className="flex items-center gap-1 data-[state=active]:bg-chart-5/10 data-[state=active]:text-chart-5"
-                >
-                  <Folder className="h-4 w-4" />
-                  <span>{category.name}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {categories.map((category) => {
-              const categoryDiets = getDietsForCategory(category.id);
-              
-              return (
-                <TabsContent key={category.id} value={category.id} className="mt-0">
-                  <ScrollArea className="h-[400px] pr-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <div>
-                        <h3 className="font-semibold">{category.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {categoryDiets.length} {categoryDiets.length === 1 ? 'diet' : 'diets'}
-                        </p>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleDeleteCategory(category.id)}
-                        disabled={isLoading}
-                      >
-                        <X className="h-4 w-4 text-muted-foreground" />
-                        <span className="sr-only">Delete Category</span>
-                      </Button>
-                    </div>
-
-                    {categoryDiets.length > 0 ? (
-                      <div className="space-y-3">
-                        {categoryDiets.map((diet) => (
-                          <div 
-                            key={diet.id}
-                            className="flex items-center gap-3 p-2 rounded-lg bg-background/60 border border-border/30 hover:bg-background/80"
-                          >
-                            <div className="relative h-12 w-12 rounded-md overflow-hidden flex-shrink-0">
-                              <Image
-                                src={diet.imageUrl}
-                                alt={diet.name}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="flex-grow min-w-0">
-                              <Link href={`/diets/${diet.id}`}>
-                                <h4 className="font-medium text-sm hover:text-chart-5 transition-colors truncate">
-                                  {diet.name}
-                                </h4>
-                              </Link>
-                              <div className="flex gap-2 items-center text-xs">
-                                <span className="text-muted-foreground">
-                                  {diet.nutritionalFacts.calories} kcal
-                                </span>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDietFromCategory(category.id, diet.id)}
-                              disabled={isLoading}
-                            >
-                              <X className="h-3 w-3 text-muted-foreground" />
-                              <span className="sr-only">Remove</span>
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-[300px] text-center">
-                        <FolderPlus className="h-12 w-12 text-muted-foreground mb-4 opacity-40" />
-                        <p className="text-muted-foreground mb-4">
-                          This category is empty
-                        </p>
-                        <Link href="/diets">
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <Plus className="h-4 w-4" />
-                            Add Diets
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
-                  </ScrollArea>
-                </TabsContent>
-              );
-            })}
-          </Tabs>
-        ) : (
+        </CardHeader>
+        <CardContent>
           <div className="flex flex-col items-center justify-center h-[300px] text-center">
             <FolderPlus className="h-12 w-12 text-muted-foreground mb-4 opacity-40" />
             <p className="text-muted-foreground mb-6">
@@ -323,7 +267,182 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
               </DialogContent>
             </Dialog>
           </div>
-        )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Create tab content separately to avoid issues with keys
+  const tabTriggers = categories.map((category, index) => (
+    <TabsTrigger
+      key={`trigger-${category.id}-${index}`}
+      value={category.id}
+      className="flex items-center gap-1 data-[state=active]:bg-chart-5/10 data-[state=active]:text-chart-5"
+    >
+      <Folder className="h-4 w-4" />
+      <span>{category.name}</span>
+    </TabsTrigger>
+  ));
+
+  const tabContents = categories.map((category, index) => {
+    const categoryDiets = getDietsForCategory(category.id);
+    
+    return (
+      <TabsContent 
+        key={`content-${category.id}-${index}`} 
+        value={category.id} 
+        className="mt-0"
+      >
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="flex justify-between items-center mb-3">
+            <div>
+              <h3 className="font-semibold">{category.name}</h3>
+              <p className="text-sm text-muted-foreground">
+                {categoryDiets.length} {categoryDiets.length === 1 ? 'diet' : 'diets'}
+              </p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handleDeleteCategory(category.id)}
+              disabled={isLoading}
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+              <span className="sr-only">Delete Category</span>
+            </Button>
+          </div>
+
+          {dietsLoading ? (
+            <div className="flex flex-col space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div 
+                  key={i}
+                  className="flex items-center gap-3 p-2 rounded-lg bg-background/60 border border-border/30 animate-pulse"
+                >
+                  <div className="h-12 w-12 rounded-md bg-muted"></div>
+                  <div className="flex-grow">
+                    <div className="h-4 w-3/4 bg-muted rounded mb-1"></div>
+                    <div className="h-3 w-1/4 bg-muted rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : categoryDiets.length > 0 ? (
+            <div className="space-y-3">
+              {categoryDiets.map((diet, dietIndex) => (
+                <div 
+                  key={`diet-${diet.id}-${dietIndex}`}
+                  className="flex items-center gap-3 p-2 rounded-lg bg-background/60 border border-border/30 hover:bg-background/80"
+                >
+                  <div className="relative h-12 w-12 rounded-md overflow-hidden flex-shrink-0">
+                    <Image
+                      src={diet.imageUrl || "/assets/placeholder.jpg"}
+                      alt={diet.name || "Diet"}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex-grow min-w-0">
+                    <Link href={`/diets/${diet.id}`}>
+                      <h4 className="font-medium text-sm hover:text-chart-5 transition-colors truncate">
+                        {diet.name || "Unnamed Diet"}
+                      </h4>
+                    </Link>
+                    <div className="flex gap-2 items-center text-xs">
+                      <span className="text-muted-foreground">
+                        {diet.nutritionalFacts?.calories || 0} kcal
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeDietFromCategory(category.id, diet.id)}
+                    disabled={isLoading}
+                  >
+                    <X className="h-3 w-3 text-muted-foreground" />
+                    <span className="sr-only">Remove</span>
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[300px] text-center">
+              <FolderPlus className="h-12 w-12 text-muted-foreground mb-4 opacity-40" />
+              <p className="text-muted-foreground mb-4">
+                This category is empty
+              </p>
+              <Link href="/diets">
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Plus className="h-4 w-4" />
+                  Add Diets
+                </Button>
+              </Link>
+            </div>
+          )}
+        </ScrollArea>
+      </TabsContent>
+    );
+  });
+
+  return (
+    <Card className="bg-card/80 backdrop-blur-sm border border-border/50">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>My Diet Categories</CardTitle>
+            <CardDescription>
+              Organize your saved diets into custom categories
+            </CardDescription>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="gap-1">
+                <FolderPlus className="h-4 w-4" />
+                <span>New Category</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Category</DialogTitle>
+                <DialogDescription>
+                  Add a name for your new diet category.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Label htmlFor="category-name" className="mb-2 block">
+                  Category Name
+                </Label>
+                <Input
+                  id="category-name"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="e.g., Weekday Lunches"
+                />
+              </div>
+              <DialogFooter>
+                <Button 
+                  disabled={!newCategoryName || isLoading} 
+                  onClick={handleCreateCategory}
+                >
+                  {isLoading ? "Creating..." : "Create Category"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Tabs 
+          value={activeCategory} 
+          onValueChange={setActiveCategory}
+          defaultValue={categories[0]?.id}
+        >
+          <TabsList className="w-full justify-start mb-4 overflow-x-auto py-1 bg-transparent">
+            {tabTriggers}
+          </TabsList>
+          {tabContents}
+        </Tabs>
       </CardContent>
     </Card>
   );

@@ -2,15 +2,8 @@ import axios from 'axios';
 
 // Environment variables should be used for API keys in production
 const RAPID_API_KEY = process.env.NEXT_PUBLIC_RAPIDAPI_KEY || 'bb8d917516mshaa036c058796f3cp1baebejsn6ce9e216d638';
-const RAPID_API_HOST = 'spoonacular-recipe-food-nutrition-v1.p.rapidapi.com';
+const RAPID_API_HOST = 'keto-diet.p.rapidapi.com';
 
-const spoonacularApi = axios.create({
-  baseURL: `https://${RAPID_API_HOST}`,
-  headers: {
-    'x-rapidapi-key': RAPID_API_KEY,
-    'x-rapidapi-host': RAPID_API_HOST,
-  },
-});
 
 const ketoApi = axios.create({
   baseURL: `https://keto-diet.p.rapidapi.com`,
@@ -19,20 +12,6 @@ const ketoApi = axios.create({
     'x-rapidapi-host': 'keto-diet.p.rapidapi.com',
   },
 });
-
-export interface SpoonacularDiet {
-  id: number;
-  title: string;
-  image: string;
-  imageType: string;
-  nutrition?: {
-    nutrients: {
-      name: string;
-      amount: number;
-      unit: string;
-    }[];
-  };
-}
 
 export interface KetoDiet {
   id: number;
@@ -109,7 +88,7 @@ export interface SearchParams {
 
 export async function searchDiets(params: SearchParams) {
   try {
-    const response = await spoonacularApi.get('/recipes/complexSearch', { 
+    const response = await ketoApi.get('/recipes/complexSearch', { 
       params: {
         ...params,
         addRecipeNutrition: true
@@ -124,7 +103,7 @@ export async function searchDiets(params: SearchParams) {
 
 export async function getDietById(id: number) {
   try {
-    const response = await spoonacularApi.get(`/recipes/${id}/information`, {
+    const response = await ketoApi.get(`/recipes/${id}/information`, {
       params: {
         includeNutrition: true
       }

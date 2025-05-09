@@ -1,32 +1,31 @@
 import { UserProfile, UserPreference, Category } from '../types';
+import { getSession } from 'next-auth/react';
 
-// Current user - to be used across components
-let currentUser: string | null = null;
-
-// Get the current user email - could be replaced with proper authentication
-export const getCurrentUserEmail = (): string => {
+// Get the current user email from the authenticated session
+export const getCurrentUserEmail = async (): Promise<string> => {
   if (typeof window !== 'undefined') {
-    if (!currentUser) {
-      currentUser = localStorage.getItem('userEmail') || 'alex@example.com';
-      localStorage.setItem('userEmail', currentUser);
+    const session = await getSession();
+    
+    if (session?.user?.email) {
+      return session.user.email;
     }
-    return currentUser;
+    
+    throw new Error('User not authenticated');
   }
-  return 'alex@example.com'; // fallback for server-side
-};
-
-// Set current user email
-export const setCurrentUserEmail = (email: string): void => {
-  if (typeof window !== 'undefined') {
-    currentUser = email;
-    localStorage.setItem('userEmail', email);
-  }
+  return ''; // Empty string for server-side
 };
 
 // Get user data from API
 export const getUserData = async (): Promise<UserProfile> => {
-  const email = getCurrentUserEmail();
   try {
+    const session = await getSession();
+    
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated');
+    }
+    
+    const email = session.user.email;
+    
     const response = await fetch(`/api/user?email=${encodeURIComponent(email)}`);
     
     if (!response.ok) {
@@ -43,8 +42,15 @@ export const getUserData = async (): Promise<UserProfile> => {
 
 // Update user preferences
 export const updateUserPreferences = async (preferences: UserPreference): Promise<UserProfile> => {
-  const email = getCurrentUserEmail();
   try {
+    const session = await getSession();
+    
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated');
+    }
+    
+    const email = session.user.email;
+    
     const response = await fetch(`/api/user/preferences?email=${encodeURIComponent(email)}`, {
       method: 'PUT',
       headers: {
@@ -66,8 +72,15 @@ export const updateUserPreferences = async (preferences: UserPreference): Promis
 
 // Save a diet
 export const saveDiet = async (dietId: string): Promise<UserProfile> => {
-  const email = getCurrentUserEmail();
   try {
+    const session = await getSession();
+    
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated');
+    }
+    
+    const email = session.user.email;
+    
     const response = await fetch(`/api/user/saved-diets?email=${encodeURIComponent(email)}`, {
       method: 'POST',
       headers: {
@@ -89,8 +102,15 @@ export const saveDiet = async (dietId: string): Promise<UserProfile> => {
 
 // Remove a saved diet
 export const removeSavedDiet = async (dietId: string): Promise<UserProfile> => {
-  const email = getCurrentUserEmail();
   try {
+    const session = await getSession();
+    
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated');
+    }
+    
+    const email = session.user.email;
+    
     const response = await fetch(`/api/user/saved-diets?email=${encodeURIComponent(email)}&dietId=${encodeURIComponent(dietId)}`, {
       method: 'DELETE',
     });
@@ -108,8 +128,15 @@ export const removeSavedDiet = async (dietId: string): Promise<UserProfile> => {
 
 // Create a new category
 export const createCategory = async (name: string): Promise<UserProfile> => {
-  const email = getCurrentUserEmail();
   try {
+    const session = await getSession();
+    
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated');
+    }
+    
+    const email = session.user.email;
+    
     const response = await fetch(`/api/user/categories?email=${encodeURIComponent(email)}`, {
       method: 'POST',
       headers: {
@@ -131,8 +158,15 @@ export const createCategory = async (name: string): Promise<UserProfile> => {
 
 // Update all categories
 export const updateCategories = async (categories: Category[]): Promise<UserProfile> => {
-  const email = getCurrentUserEmail();
   try {
+    const session = await getSession();
+    
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated');
+    }
+    
+    const email = session.user.email;
+    
     const response = await fetch(`/api/user/categories?email=${encodeURIComponent(email)}`, {
       method: 'PUT',
       headers: {

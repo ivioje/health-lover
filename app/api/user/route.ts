@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import UserModel from '@/lib/models/userModel';
-import { mockCategories, healthPredictions } from '@/lib/data';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Try to find the user by email
     let user = await UserModel.findOne({ email });
     
-    // If user doesn't exist, create a new one with default data
+    // If user doesn't exist, create a new one with minimal default data
     if (!user) {
       user = await UserModel.create({
         email,
@@ -29,9 +29,15 @@ export async function GET(request: NextRequest) {
           activityLevel: 'moderate',
           age: 30,
         },
-        categories: mockCategories,
+        categories: [
+          {
+            id: uuidv4(),
+            name: "Favorites",
+            dietIds: []
+          }
+        ],
         savedDiets: [],
-        healthPredictions: healthPredictions,
+        healthPredictions: [],
       });
     }
     
