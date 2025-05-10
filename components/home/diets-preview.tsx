@@ -1,10 +1,32 @@
-import React from 'react';
-import { diets } from '@/lib/data';
+"use client";
+
+import React, { useEffect, useState } from 'react';
 import { DietCard } from '../diets/diet-card';
 import { Button } from '../ui/button';
 import Link from 'next/link';
+import { searchKetoDiets, mapKetoDietToAppDiet } from '@/lib/api';
+import { Diet } from '@/lib/types';
 
 const DietsPreview = () => {
+  const [diets, setDiets] = useState<Diet[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDiets = async () => {
+      setLoading(true);
+      try {
+        const apiDiets = await searchKetoDiets();
+        const mapped = apiDiets.map(mapKetoDietToAppDiet);
+        setDiets(mapped.slice(0, 8));
+      } catch (e) {
+        setDiets([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDiets();
+  }, []);
+
   return (
     <div className='container py-8 px-4 sm:px-10 md:py-12 md:px-16'>
         <div className='flex items-center justify-center flex-col w-full py-5'>
@@ -14,9 +36,15 @@ const DietsPreview = () => {
             </p>
       </div>
     <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6'>
-      {diets.slice(0, 8).map(diet => (
-        <DietCard key={diet.id} diet={diet} />
-      ))}
+      {loading ? (
+        Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-40 bg-muted rounded-lg animate-pulse" />
+        ))
+      ) : (
+        diets.map(diet => (
+          <DietCard key={diet.id} diet={diet} />
+        ))
+      )}
     </div>
     <div className='flex items-center justify-center mt-10'>
     <Button size="lg" className="bg-gradient-to-r from-chart-5 to-chart-4 hover:from-chart-5/90 hover:to-chart-4/90 text-white" asChild>
@@ -27,4 +55,4 @@ const DietsPreview = () => {
   )
 }
 
-export default DietsPreview
+export default DietsPreview;

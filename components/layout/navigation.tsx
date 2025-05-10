@@ -56,11 +56,9 @@ export function Navigation() {
               })
               .map((route) => (
                 <NavigationMenuItem key={route.name}>
-                  <Link href={route.href} passHref>
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    <NavigationMenuLink href={route.href} className={navigationMenuTriggerStyle()}>
                       {route.name}
                     </NavigationMenuLink>
-                  </Link>
                 </NavigationMenuItem>
               ))}
           </NavigationMenuList>
