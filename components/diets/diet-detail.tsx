@@ -15,12 +15,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, Heart, Plus, Folder, FolderPlus } from "lucide-react";
 import { getUserData, createCategory as createCategoryAPI, updateCategories } from "@/lib/services/userService";
 import { toast } from "@/hooks/use-toast";
+import { useSession } from "next-auth/react";
 
 interface DietDetailProps {
   diet: Diet;
 }
 
 export function DietDetail({ diet }: DietDetailProps) {
+  const { data: session, status } = useSession();
   const [isSaved, setIsSaved] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -28,6 +30,7 @@ export function DietDetail({ diet }: DietDetailProps) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!session) return;
     const fetchCategories = async () => {
       try {
         const user = await getUserData();
@@ -40,7 +43,7 @@ export function DietDetail({ diet }: DietDetailProps) {
       }
     };
     fetchCategories();
-  }, []);
+  }, [session]);
 
   const addToCategory = async (categoryId: string) => {
     setLoading(true);
@@ -224,15 +227,17 @@ export function DietDetail({ diet }: DietDetailProps) {
             </div>
 
             <Separator className="my-4" />
+            {!session && <span className="text-sm text-muted-foreground">Sign in to save and add diets to your categories.</span>}
 
             <div className="flex gap-4">
               <Button
                 onClick={toggleSave}
-                className={`flex-1 ${
+                className={`flex-1 disabled:cursor-not-allowed ${
                   isSaved
                     ? "bg-chart-5 hover:bg-chart-5/90 text-white"
                     : "bg-card border border-chart-5/50 text-chart-5 hover:bg-chart-5/10"
                 }`}
+                disabled={!session}
               >
                 <Heart
                   className={`h-4 w-4 mr-2 ${isSaved ? "fill-current" : ""}`}
@@ -242,7 +247,7 @@ export function DietDetail({ diet }: DietDetailProps) {
 
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline">
+                  <Button variant="outline" className="disabled:cursor-not-allowed" disabled={!session}>
                     <Folder className="h-4 w-4 mr-2" />
                     Add to Category
                   </Button>

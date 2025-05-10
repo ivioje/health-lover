@@ -47,15 +47,22 @@ export function Navigation() {
         {/* Desktop Navigation */}
         <NavigationMenu className="hidden md:flex">
           <NavigationMenuList>
-            {!routes.some(route => route.name === 'Dashboard') && routes.map((route) => (
-              <NavigationMenuItem key={route.name}>
-                <Link href={route.href} passHref>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    {route.name}
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
-            ))}
+            {routes
+              .filter(route => {
+                if ((route.name === "Dashboard" || route.name === "Preferences") && !session) {
+                  return false;
+                }
+                return true;
+              })
+              .map((route) => (
+                <NavigationMenuItem key={route.name}>
+                  <Link href={route.href} passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      {route.name}
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              ))}
           </NavigationMenuList>
         </NavigationMenu>
 
@@ -112,17 +119,24 @@ export function Navigation() {
             </SheetTrigger>
             <SheetContent side="right" className="md:hidden">
               <div className="flex flex-col space-y-4 mt-8">
-                {routes.map((route) => (
-                  <Link
-                    key={route.name}
-                    href={route.href}
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-2 px-2 py-3 rounded-md hover:bg-accent"
-                  >
-                    <route.icon className="h-5 w-5" />
-                    <span>{route.name}</span>
-                  </Link>
-                ))}
+                {routes
+                  .filter(route => {
+                    if ((route.name === "Dashboard" || route.name === "Preferences") && !session) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((route) => (
+                    <Link
+                      key={route.name}
+                      href={route.href}
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2 px-2 py-3 rounded-md hover:bg-accent"
+                    >
+                      <route.icon className="h-5 w-5" />
+                      <span>{route.name}</span>
+                    </Link>
+                  ))}
                 {session ? (
                   <Button 
                     className="mt-4"

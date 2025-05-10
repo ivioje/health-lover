@@ -323,7 +323,7 @@ export function DietGallery({ diets }: DietGalleryProps) {
       
       <div className="flex justify-center mt-6">
         <p className="text-sm text-muted-foreground">
-          Showing {Math.min(paginatedDiets.length, itemsPerPage)} of {filteredDiets.length} keto diet recipes from API
+          Showing {Math.min(paginatedDiets.length, itemsPerPage)} of {filteredDiets.length} keto diet recipes.
         </p>
       </div>
     </div>
