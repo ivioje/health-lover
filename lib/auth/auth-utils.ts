@@ -21,39 +21,25 @@ export const generatePasswordResetToken = (): string => {
   return crypto.randomBytes(32).toString('hex');
 };
 
-// Email service configuration
 export const createEmailTransporter = () => {
-  const isProduction = process.env.NODE_ENV === 'production';
+  // const isProduction = process.env.NODE_ENV === 'production';
   
-  if (isProduction) {
-    // Production email service
     return nodemailer.createTransport({
       host: process.env.EMAIL_SERVER_HOST,
       port: Number(process.env.EMAIL_SERVER_PORT),
+      secure: false,
       auth: {
         user: process.env.EMAIL_SERVER_USER,
         pass: process.env.EMAIL_SERVER_PASSWORD,
       },
-      secure: true,
     });
-  } else {
-    // Development email service
-    return nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      auth: {
-        user: process.env.DEV_EMAIL_USER,
-        pass: process.env.DEV_EMAIL_PASSWORD,
-      },
-    });
-  }
 };
 
 export const createVerificationEmailOptions = (to: string, verificationUrl: string) => {
-  const appName = process.env.APP_NAME || 'HealthLover';
+  const appName = process.env.APP_NAME;
   
   return {
-    from: `${appName} <${process.env.EMAIL_FROM || 'noreply@healthlover.com'}>`,
+    from: `${appName} <${process.env.EMAIL_FROM}>`,
     to,
     subject: `Verify your email for ${appName}`,
     html: `
@@ -77,10 +63,10 @@ export const createVerificationEmailOptions = (to: string, verificationUrl: stri
 };
 
 export const createPasswordResetEmailOptions = (to: string, resetUrl: string) => {
-  const appName = process.env.APP_NAME || 'HealthLover';
+  const appName = process.env.APP_NAME;
   
   return {
-    from: `${appName} <${process.env.EMAIL_FROM || 'noreply@healthlover.com'}>`,
+    from: `${appName} <${process.env.EMAIL_FROM}>`,
     to,
     subject: `Reset your password for ${appName}`,
     html: `

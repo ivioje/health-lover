@@ -21,7 +21,6 @@ export default function SavedDiets({ savedIds }: SavedDietsProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    // Find the diets that match the saved IDs
     const foundDiets = allDiets.filter(diet => savedIds.includes(diet.id));
     setSavedDiets(foundDiets);
   }, [savedIds]);

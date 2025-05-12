@@ -32,10 +32,20 @@ const UserSchema = new Schema({
     required: true,
     unique: true,
   },
+  password: {
+    type: String,
+    required: true,
+  },
   preferences: PreferenceSchema,
   categories: [CategorySchema],
   savedDiets: [String],
   healthPredictions: [HealthPredictionSchema],
+  verificationToken: { type: String },
+  verificationTokenExpiry: { type: Date },
+  emailVerified: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

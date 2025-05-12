@@ -26,12 +26,8 @@ export default function VerifyEmailPage() {
       }
 
       try {
-        const response = await fetch("/api/auth/verify-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ token }),
+        const response = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, {
+          method: "GET",
         });
 
         const data = await response.json();
@@ -42,9 +38,28 @@ export default function VerifyEmailPage() {
             router.push("/auth/login");
           }, 3000);
         } else {
-          setError(data.message || "Failed to verify email address");
+          const postResponse = await fetch("/api/auth/verify-email", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token }),
+          });
+
+          const postData = await postResponse.json();
+
+          if (postResponse.ok) {
+            setIsVerified(true);
+            setTimeout(() => {
+              router.push("/auth/login");
+            }, 3000);
+          } else {
+            console.error("Verification error:", postData);
+            setError(postData.message || "Failed to verify email address");
+          }
         }
       } catch (error) {
+        console.error("Verification error:", error);
         setError("An unexpected error occurred. Please try again.");
       } finally {
         setIsVerifying(false);

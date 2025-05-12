@@ -20,6 +20,7 @@ export default function DashboardPage() {
       try {
         setIsLoading(true);
         const userData = await getUserData();
+        console.log('Fetched user data:', userData);
         setUser(userData);
       } catch (err) {
         console.error('Error fetching user data:', err);
@@ -32,20 +33,16 @@ export default function DashboardPage() {
     fetchUserData();
   }, []);
 
-  // Get AI recommended diets based on user preferences
   const getRecommendedDiets = () => {
     if (!user) return [];
-    
-    // If user has dietary restrictions or health goals, filter based on those
     const dietaryRestrictions = user.preferences?.dietaryRestrictions || [];
     const healthGoals = user.preferences?.healthGoals || [];
     
-    // Create array to hold recommended diet IDs 
     let recommendedIds: string[] = [];
     
     // to be done with an ML model
     if (dietaryRestrictions.includes('gluten-free')) {
-      recommendedIds.push('4', '5'); // Plant-based and Paleo diets
+      recommendedIds.push('4', '5'); // Gluten-Free and Paleo diets
     }
     
     if (healthGoals.includes('weight-loss')) {

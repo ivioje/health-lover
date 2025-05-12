@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import UserModel from '@/lib/models/userModel';
-import User from "@/lib/models/userModel";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,17 +12,31 @@ export async function GET(request: NextRequest) {
     }
     
     await connectToDatabase();
-    const user = await UserModel.findOne({ verificationToken: token });
+    
+    // Find user with matching token and check if token has expired
+    const user = await UserModel.findOne({ 
+      verificationToken: token,
+      verificationTokenExpiry: { $gt: new Date() }
+    });
     
     if (!user) {
-      return NextResponse.json({ success: false, message: 'Invalid verification token' }, { status: 400 });
+      console.error('Token validation failed:', { 
+        tokenProvided: token,
+        userFound: !!user
+      });
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Invalid or expired verification token'
+      }, { status: 400 });
     }
     
     if (user.emailVerified) {
       return NextResponse.json({ success: true, message: 'Email already verified' });
     }
-    user.emailVerified = new Date();
+    
+    user.emailVerified = true;
     user.verificationToken = undefined;
+    user.verificationTokenExpiry = undefined;
     await user.save();
     
     return NextResponse.json({ 
@@ -39,7 +52,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-
 export async function POST(req: Request) {
   try {
     await connectToDatabase();
@@ -52,19 +64,23 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = await User.findOne({
+    const user = await UserModel.findOne({
       verificationToken: token,
-      verificationTokenExpiry: { $gt: Date.now() },
+      verificationTokenExpiry: { $gt: new Date() }
     });
 
     if (!user) {
+      console.error('Token validation failed:', { 
+        tokenProvided: token,
+        userFound: !!user
+      });
       return NextResponse.json(
         { message: "Invalid or expired verification token" },
         { status: 400 }
       );
     }
 
-    user.isVerified = true;
+    user.emailVerified = true;
     user.verificationToken = undefined;
     user.verificationTokenExpiry = undefined;
     await user.save();
