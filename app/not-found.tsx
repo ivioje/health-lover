@@ -8,7 +8,7 @@ export default function NotFound() {
       <Heart className="h-12 w-12 text-chart-5 mb-4" />
       <h1 className="text-4xl font-bold mb-4">Page Not Found</h1>
       <p className="text-xl text-muted-foreground mb-8 max-w-md">
-        The page you're looking for doesn't exist or has been moved.
+        The page you&apos;re looking for doesn&apos;t exist or has been moved.
       </p>
       <Button asChild>
         <Link href="/">Return to Home</Link>

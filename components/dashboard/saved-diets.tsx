@@ -119,7 +119,7 @@ export default function SavedDiets({ savedIds }: SavedDietsProps) {
             <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-3">
               <HeartIcon className="h-5 w-5 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground mb-4">You haven't saved any diets yet</p>
+            <p className="text-muted-foreground mb-4">You haven&apos;t saved any diets yet</p>
             <Link href="/diets">
               <Button variant="outline" size="sm">Browse Diets</Button>
             </Link>

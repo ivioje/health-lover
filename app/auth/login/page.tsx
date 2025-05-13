@@ -116,7 +116,7 @@ export default function LoginPage() {
               </Alert>
             )}
             
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               <Button 
                 variant="outline" 
                 type="button" 
@@ -132,7 +132,7 @@ export default function LoginPage() {
                 Sign in with Google
               </Button>
               
-              {/* <Button 
+              <Button 
                 variant="outline" 
                 type="button" 
                 className="w-full" 
@@ -145,7 +145,7 @@ export default function LoginPage() {
                   <Icons.gitHub className="mr-2 h-4 w-4" />
                 )}
                 Sign in with GitHub
-              </Button> */}
+              </Button>
             </div>
 
             <div className="relative my-6">
@@ -157,7 +157,7 @@ export default function LoginPage() {
                   Or continue with email
                 </span>
               </div>
-            </div>
+            </div> */}
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -224,7 +224,7 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter>
             <p className="text-center text-sm text-muted-foreground w-full">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link 
                 href="/auth/signup" 
                 className="text-primary hover:underline"

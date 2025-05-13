@@ -132,7 +132,7 @@ export function DietCategories({ userCategories }: DietCategoriesProps) {
           <div className="flex flex-col items-center justify-center h-[300px] text-center">
             <FolderPlus className="h-12 w-12 text-muted-foreground mb-4 opacity-40" />
             <p className="text-muted-foreground mb-6">
-              You haven't created any categories yet
+              You haven&apos;t created any categories yet
             </p>
             <Dialog>
               <DialogTrigger asChild>

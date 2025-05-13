@@ -117,7 +117,7 @@ export default function SignUpPage() {
               </Alert>
             )}
             
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               <Button 
                 variant="outline" 
                 type="button" 
@@ -133,7 +133,7 @@ export default function SignUpPage() {
                 Sign up with Google
               </Button>
               
-              {/* <Button 
+              <Button 
                 variant="outline" 
                 type="button" 
                 className="w-full" 
@@ -146,7 +146,7 @@ export default function SignUpPage() {
                   <Icons.gitHub className="mr-2 h-4 w-4" />
                 )}
                 Sign up with GitHub
-              </Button> */}
+              </Button>
             </div>
 
             <div className="relative my-6">
@@ -158,7 +158,7 @@ export default function SignUpPage() {
                   Or sign up with email
                 </span>
               </div>
-            </div>
+            </div> */}
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

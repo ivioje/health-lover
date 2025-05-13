@@ -39,7 +39,7 @@ export function CTASection() {
                 Ready to Transform Your Health Journey?
               </h2>
               <p className="text-muted-foreground mb-8">
-                Start your personalized nutrition plan today with HealthLover's
+                Start your personalized nutrition plan today with HealthLover&apos;s
                 AI-powered recommendations. Your optimal health is just a few
                 clicks away.
               </p>

@@ -74,7 +74,7 @@ export default function SavedDietsPage() {
             </div>
             <h3 className="text-lg font-medium mb-2">No Saved Diets Yet</h3>
             <p className="text-muted-foreground mb-6">
-              You haven't saved any diets to your collection yet.
+              You haven&apos;t saved any diets to your collection yet.
             </p>
             <Link href="/diets">
               <Button>Browse Diets</Button>
