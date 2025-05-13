@@ -35,10 +35,8 @@ export function DietDetail({ diet }: DietDetailProps) {
     const fetchUserData = async () => {
       try {
         const user = await getUserData();
-        // Update categories
         setCategories(user.categories || []);
-        
-        // Check if this diet is already saved
+
         const savedDiets = user.savedDiets || [];
         setIsSaved(savedDiets.includes(diet.id));
       } catch (e) {
@@ -53,10 +51,18 @@ export function DietDetail({ diet }: DietDetailProps) {
   }, [session, diet.id]);
 
   const addToCategory = async (categoryId: string) => {
+    if (!session) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to add diets to categories",
+        variant: "destructive", 
+      });
+      return;
+    }
     setLoading(true);
     try {
       const updatedCategories = categories.map((category) => {
-        if (category.id === categoryId) {
+        if (category._id === categoryId) {
           return {
             ...category,
             dietIds: category.dietIds.includes(diet.id)
@@ -77,7 +83,7 @@ export function DietDetail({ diet }: DietDetailProps) {
     setLoading(true);
     try {
       const updatedCategories = categories.map((category) => {
-        if (category.id === categoryId) {
+        if (category._id === categoryId) {
           return {
             ...category,
             dietIds: category.dietIds.filter((id) => id !== diet.id),
@@ -99,7 +105,7 @@ export function DietDetail({ diet }: DietDetailProps) {
         const user = await createCategoryAPI(newCategoryName.trim());
         const newCat = user.categories[user.categories.length - 1];
         const updatedCategories = user.categories.map((cat) =>
-          cat.id === newCat.id
+          cat._id === newCat._id
             ? { ...cat, dietIds: [...cat.dietIds, diet.id] }
             : cat
         );
@@ -116,7 +122,7 @@ export function DietDetail({ diet }: DietDetailProps) {
   const deleteCategory = async (categoryId: string) => {
     setLoading(true);
     try {
-      const updatedCategories = categories.filter((cat) => cat.id !== categoryId);
+      const updatedCategories = categories.filter((cat) => cat._id !== categoryId);
       await updateCategories(updatedCategories);
       setCategories(updatedCategories);
     } finally {
@@ -138,14 +144,12 @@ export function DietDetail({ diet }: DietDetailProps) {
     
     try {
       if (isSaved) {
-        // Remove from saved diets
         await removeSavedDiet(diet.id);
         toast({
           title: "Diet removed",
           description: "Diet removed from your saved collection",
         });
       } else {
-        // Add to saved diets
         await saveDiet(diet.id);
         toast({
           title: "Diet saved",
@@ -303,7 +307,7 @@ export function DietDetail({ diet }: DietDetailProps) {
                         const isInCategory = category.dietIds.includes(diet.id);
                         return (
                           <div
-                            key={category.id}
+                            key={category._id}
                             className="flex items-center justify-between p-2 hover:bg-accent rounded-md"
                           >
                             <span className="truncate mr-2">{category.name}</span>
@@ -311,36 +315,24 @@ export function DietDetail({ diet }: DietDetailProps) {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 p-0"
+                                className="h-6 w-6 p-0 cursor-pointer rounded-full hover:bg-gray-300"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   if (!loading) {
-                                    isInCategory ? removeFromCategory(category.id) : addToCategory(category.id);
+                                    isInCategory ? removeFromCategory(category._id) : addToCategory(category._id);
                                   }
                                 }}
                                 disabled={loading}
                               >
                                 {isInCategory ? (
                                   <Check className="h-4 w-4 text-chart-5" />
+                                ) : loading ? (
+                                  <LoaderIcon className="h-4 w-4 animate-spin" />
                                 ) : (
-                                  <Plus className="h-4 w-4 text-muted-foreground" />
+                                  <Plus className="h-4 w-4 text-chart-5" />
                                 )}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 px-1 text-xs text-muted-foreground hover:text-destructive"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  if (!loading) {
-                                    deleteCategory(category.id);
-                                  }
-                                }}
-                                disabled={loading}
-                              >
-                                Delete
+                                
                               </Button>
                             </div>
                           </div>

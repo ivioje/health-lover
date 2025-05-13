@@ -6,20 +6,7 @@ import { Input } from '../ui/input';
 import { Tabs, TabsList } from '../ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-
-interface CreateCategoryProps {
-    isDialogOpen: boolean;
-    setIsDialogOpen: (open: boolean) => void;
-    newCategoryName: string;
-    setNewCategoryName: (name: string) => void;
-    isLoading: boolean;
-    handleCreateCategory: () => void;
-    activeCategory: string;
-    setActiveCategory: (category: string) => void;
-    categories: { id: string; name: string }[];
-    tabTriggers: React.ReactNode;
-    tabContents: React.ReactNode;
-}
+import { CreateCategoryProps } from '@/lib/types';
 
 const CreateCategory: React.FC<CreateCategoryProps> = ({ 
     isDialogOpen, 

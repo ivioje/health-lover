@@ -2,23 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import userModel from '@/lib/models/userModel';
 
-//add categories
 export async function POST(request: NextRequest) {
   try {
     await connectToDatabase();
     const searchParams = request.nextUrl.searchParams;
     const email = searchParams.get('email');
-    
+
     if (!email) {
       return NextResponse.json({ error: 'Email parameter is required' }, { status: 400 });
     }
-    
-    const { category_name } = await request.json();
-    if (!category_name) {
-      return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
+
+    const { name } = await request.json();
+    if (!name || typeof name !== 'string') {
+      return NextResponse.json({ error: 'Invalid category name' }, { status: 400 });
     }
-    
-    const category = { category_name, dietIds: [] };
+    const category = { name, dietIds: [] };
     const updatedUser = await userModel.findOneAndUpdate(
       { email },
       { 
@@ -27,7 +25,7 @@ export async function POST(request: NextRequest) {
       },
       { new: true }
     );
-    
+
     return NextResponse.json(updatedUser);
   } catch (error) {
     console.error('Error creating category:', error);

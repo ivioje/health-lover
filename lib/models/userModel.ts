@@ -20,7 +20,7 @@ const PreferenceSchema = new Schema({
 
 // categories
 const CategorySchema = new Schema({
-  category_name: String,
+  name: String,
   dietIds: [String],
 });
 

@@ -69,9 +69,7 @@ export async function getKetoDietById(id: number) {
 
 export function generateDietTags(diet: KetoDiet): string[] {
   const tags: string[] = ['keto'];
-  
-  // Add category as tag if available
-  if (diet.category?.category) {
+    if (diet.category?.category) {
     tags.push(diet.category.category.toLowerCase().replace(/\s+/g, '-'));
   }
   
@@ -93,7 +91,6 @@ export function generateDietTags(diet: KetoDiet): string[] {
   return tags;
 }
 
-// Extract ingredients from a keto diet
 export function extractIngredients(diet: KetoDiet): string[] {
   const ingredients = [];
   
@@ -116,7 +113,6 @@ export function extractIngredients(diet: KetoDiet): string[] {
   return ingredients;
 }
 
-// Extract directions from a keto diet
 export function extractDirections(diet: KetoDiet): string[] {
   const directions = [];
   

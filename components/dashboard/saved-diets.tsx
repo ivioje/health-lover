@@ -32,7 +32,7 @@ export default function SavedDiets({ savedIds }: SavedDietsProps) {
         const apiDiets = await searchKetoDiets();
         if (apiDiets && Array.isArray(apiDiets)) {
           const mapped = apiDiets
-            .filter(diet => diet && diet.id && savedIds.includes(diet.id.toString()))
+            .filter(diet => diet && diet._id && savedIds.includes(diet._id.toString()))
             .map(diet => mapKetoDietToAppDiet(diet));
           
           setSavedDiets(mapped);

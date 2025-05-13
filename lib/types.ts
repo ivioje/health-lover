@@ -26,7 +26,7 @@ export interface Diet {
 }
 
 export interface Category {
-  id: string;
+  _id: string;
   name: string;
   dietIds: string[];
 }
@@ -53,13 +53,11 @@ export interface UserProfile {
   categories: Category[];
   savedDiets: string[];
   healthPredictions: HealthPrediction[];
-  // Auth-related properties
   emailVerified?: Date | null;
   image?: string | null;
   provider?: string | null;
 }
 
-// Authentication Types
 export interface SignUpData {
   name: string;
   email: string;
@@ -151,4 +149,18 @@ export interface SearchParams {
   sugar_in_grams__gt?: string;
   fiber_in_grams__lt?: string;
   fiber_in_grams__gt?: string;
+}
+
+export interface CreateCategoryProps {
+    isDialogOpen: boolean;
+    setIsDialogOpen: (open: boolean) => void;
+    newCategoryName: string;
+    setNewCategoryName: (name: string) => void;
+    isLoading: boolean;
+    handleCreateCategory: () => void;
+    activeCategory: string;
+    setActiveCategory: (category: string) => void;
+    categories: { id: string; name: string }[];
+    tabTriggers: React.ReactNode;
+    tabContents: React.ReactNode;
 }

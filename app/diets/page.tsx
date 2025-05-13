@@ -1,4 +1,3 @@
-import { diets } from "@/lib/data";
 import { DietGallery } from "@/components/diets/diet-gallery";
 
 export default function DietsPage() {
@@ -12,7 +11,7 @@ export default function DietsPage() {
         </p>
       </div>
 
-      <DietGallery diets={diets} />
+      <DietGallery />
     </div>
   );
 }

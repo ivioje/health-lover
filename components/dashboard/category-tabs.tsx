@@ -29,13 +29,10 @@ interface CategoryTabsProps {
 
 const CategoryTabs: React.FC<CategoryTabsProps> = ({ 
     category, 
-    index, 
     categoryDiets, 
     handleDeleteCategory, 
     isLoading, 
     dietsLoading, 
-    dietIndex, 
-    diet, 
     removeDietFromCategory 
     }) => {
     return (

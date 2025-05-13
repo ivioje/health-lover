@@ -16,14 +16,14 @@ import CreateCategory from "./create-category";
 import CategoryTabs from "./category-tabs";
 
 interface DietCategoriesProps {
-  initialCategories: Category[];
+  userCategories: Category[];
 }
 
-export function DietCategories({ initialCategories }: DietCategoriesProps) {
-  const [categories, setCategories] = useState<Category[]>(initialCategories || []);
+export function DietCategories({ userCategories }: DietCategoriesProps) {
+  const [categories, setCategories] = useState<Category[]>(userCategories || []);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>(
-    initialCategories && initialCategories.length > 0 ? initialCategories[0]?.id : ""
+    userCategories && userCategories.length > 0 ? userCategories[0]?._id : ""
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,10 +48,8 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
           setDietsLoading(false);
           return;
         }
-
-        const userSavedDiets = userData.savedDiets || [];
-        const dietsMap: Record<string, Diet> = {};
         
+        const dietsMap: Record<string, Diet> = {};
         diets.forEach(diet => {
           if (diet.id) {
             dietsMap[diet.id] = diet;
@@ -114,7 +112,7 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
         setCategories(userData.categories);
         
         const newCategory = userData.categories[userData.categories.length - 1];
-        setActiveCategory(newCategory.id);
+        setActiveCategory(newCategory._id);
         
         setNewCategoryName("");
         setIsDialogOpen(false);
@@ -139,14 +137,14 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
     setIsLoading(true);
     try {
       const updatedCategories = categories.filter(
-        (category) => category.id !== categoryId
+        (category) => category._id !== categoryId
       );
       
       await updateCategories(updatedCategories);
       setCategories(updatedCategories);
       
       if (activeCategory === categoryId && updatedCategories.length > 0) {
-        setActiveCategory(updatedCategories[0].id);
+        setActiveCategory(updatedCategories[0]._id);
       }
       
       toast({
@@ -166,7 +164,7 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
   };
 
   const getDietsForCategory = (categoryId: string): Diet[] => {
-    const category = categories.find((c) => c.id === categoryId);
+    const category = categories.find((c) => c._id === categoryId);
     if (!category || !category.dietIds) return [];
     
     return diets.filter((diet) => category.dietIds.includes(diet.id));
@@ -176,7 +174,7 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
     setIsLoading(true);
     try {
       const updatedCategories = categories.map((category) => {
-        if (category.id === categoryId) {
+        if (category._id === categoryId) {
           return {
             ...category,
             dietIds: category.dietIds.filter((id) => id !== dietId),
@@ -264,6 +262,35 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
     );
   }
 
+  const tabTriggers = categories.map((category, index) => (
+    <TabsTrigger
+      key={category._id}
+      value={category._id}
+      onClick={() => console.log(category._id)}
+      className="flex items-center gap-1 data-[state=active]:bg-chart-5/10 data-[state=active]:text-chart-5"
+    >
+      <Folder className="h-4 w-4" />
+      <span>{category.name}</span>
+    </TabsTrigger>
+  ));
+
+  const tabContents = categories.map((category, index) => {
+    const categoryDiets = getDietsForCategory(category._id);
+    return (
+      <TabsContent key={category._id} value={category._id}>
+        <CategoryTabs
+          category={{ ...category, id: category._id }}
+          index={index}
+          categoryDiets={categoryDiets}
+          handleDeleteCategory={handleDeleteCategory}
+          isLoading={isLoading}
+          dietsLoading={dietsLoading}
+          removeDietFromCategory={removeDietFromCategory}
+        />
+      </TabsContent>
+    );
+  });
+
   return (
     <CreateCategory 
       isDialogOpen={isDialogOpen}
@@ -274,34 +301,9 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
       handleCreateCategory={handleCreateCategory}
       activeCategory={activeCategory}
       setActiveCategory={setActiveCategory}
-      categories={categories}
-      tabTriggers={categories.map((category, index) => (
-        <TabsTrigger
-          key={category.id}
-          value={category.id}
-          onClick={() => console.log(category.id)}
-          className="flex items-center gap-1 data-[state=active]:bg-chart-5/10 data-[state=active]:text-chart-5"
-        >
-          <Folder className="h-4 w-4" />
-          <span>{category.name}</span>
-        </TabsTrigger>
-      ))}
-      tabContents={categories.map((category, index) => {
-        const categoryDiets = getDietsForCategory(category.id);
-        return (
-          <TabsContent key={category.id} value={category.id}>
-            <CategoryTabs
-              category={category}
-              index={index}
-              categoryDiets={categoryDiets}
-              handleDeleteCategory={handleDeleteCategory}
-              isLoading={isLoading}
-              dietsLoading={dietsLoading}
-              removeDietFromCategory={removeDietFromCategory}
-            />
-          </TabsContent>
-        );
-      })}
+      categories={categories.map(({ _id, name }) => ({ id: _id, name }))}
+      tabTriggers={tabTriggers}
+      tabContents={tabContents}
     />
   );
 }

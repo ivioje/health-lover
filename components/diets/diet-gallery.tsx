@@ -16,7 +16,7 @@ interface DietGalleryProps {
   diets: Diet[];
 }
 
-export function DietGallery({ diets }: DietGalleryProps) {
+export function DietGallery() {
   const [searchTerm, setSearchTerm] = useState("");
   const [apiDiets, setApiDiets] = useState<Diet[]>([]);
   const [loading, setLoading] = useState(false);

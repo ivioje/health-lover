@@ -134,7 +134,7 @@ export default function DashboardPage() {
 
       <p>Categories below</p>
       <div className="mb-6">
-        <DietCategories initialCategories={user.categories || []} />
+        <DietCategories userCategories={user.categories || []} />
       </div>
     </div>
   );
