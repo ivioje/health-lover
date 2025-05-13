@@ -12,10 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 
-interface DietGalleryProps {
-  diets: Diet[];
-}
-
 export function DietGallery() {
   const [searchTerm, setSearchTerm] = useState("");
   const [apiDiets, setApiDiets] = useState<Diet[]>([]);
@@ -35,7 +31,6 @@ export function DietGallery() {
     loadInitialApiData();
   }, []);
 
-  // Load initial API data with default parameters
   const loadInitialApiData = async () => {
     setLoading(true);
     setError(null);
@@ -52,7 +47,7 @@ export function DietGallery() {
       
       if (response && Array.isArray(response)) {
         const mappedDiets = response
-          .filter(diet => diet && diet.recipe) // Filter out items without a recipe name
+          .filter(diet => diet && diet.recipe)
           .map((diet: KetoDiet) => mapKetoDietToAppDiet(diet));
         setApiDiets(mappedDiets);
       } else {
@@ -67,13 +62,11 @@ export function DietGallery() {
     }
   };
 
-  // Safe filtering to handle potentially missing properties
   const safeIncludes = (text: string | undefined, search: string): boolean => {
     if (!text) return false;
     return text.toLowerCase().includes(search.toLowerCase());
   };
 
-  // Filter diets based on search term with null/undefined checks
   const filteredDiets = apiDiets.filter((diet) => {
     if (!diet) return false;
     if (!searchTerm) return true;
@@ -87,17 +80,14 @@ export function DietGallery() {
            ));
   });
 
-  // Calculate pagination
   const totalPages = Math.ceil(filteredDiets.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedDiets = filteredDiets.slice(startIndex, startIndex + itemsPerPage);
 
-  // Extract all unique tags with null check
   const allTags = Array.from(
     new Set(filteredDiets.flatMap(diet => diet.tags || []).filter(Boolean))
   ).sort();
 
-  // Group diets by tags with null checks
   const dietsByTag: Record<string, Diet[]> = {
     all: filteredDiets,
   };

@@ -164,3 +164,24 @@ export interface CreateCategoryProps {
     tabTriggers: React.ReactNode;
     tabContents: React.ReactNode;
 }
+
+export interface DietCategory {
+  id: string;
+  name?: string;
+  imageUrl?: string;
+  nutritionalFacts?: {
+    calories?: number;
+  };
+}
+
+export interface CategoryTabsProps {
+  category: { id: string; name: string };
+  index: number;
+  categoryDiets: DietCategory[];
+  handleDeleteCategory: (categoryId: string) => void;
+  isLoading: boolean;
+  dietsLoading: boolean;
+  dietIndex?: number;
+  diet?: DietCategory;
+  removeDietFromCategory: (categoryId: string, dietId: string) => void;
+}

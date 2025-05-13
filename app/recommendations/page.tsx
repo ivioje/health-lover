@@ -20,75 +20,58 @@ export default function RecommendationsPage() {
       try {
         setLoading(true);
         
-        // Get user preferences from localStorage if available
         const storedPreferences = localStorage.getItem('userPreferences');
         const userPreferences = storedPreferences ? JSON.parse(storedPreferences) : {};
-        
-        // Use preferences to customize API query - this is a simplified example
         const dietaryRestrictions = userPreferences.dietaryRestrictions || [];
         const healthGoals = userPreferences.healthGoals || [];
+        const activityLevel = userPreferences.activityLevel || 'moderate';
+                
+        const ketoDiets = await searchKetoDiets({ number: 20 });
+        let filteredDiets = ketoDiets;
         
-        // Construct query parameters based on user preferences
-        const queryParams: any = {
-          number: 9 
-        };
-        
-        // Add diet restrictions
+        // Apply dietary restrictions filtering
         if (dietaryRestrictions.includes('gluten-free')) {
-          queryParams.intolerances = 'gluten';
+          filteredDiets = filteredDiets.filter((diet: any) => 
+            !diet.ingredient_1?.includes('gluten') && 
+            !diet.ingredient_2?.includes('gluten') &&
+            !diet.ingredient_3?.includes('gluten')
+          );
         }
         
-        // Add health goals
+        // Apply health goals filtering
         if (healthGoals.includes('weight-loss')) {
-          queryParams.calories__lt = '500';
+          filteredDiets = filteredDiets.filter((diet: any) => 
+            diet.calories < 500
+          );
         }
         
         if (healthGoals.includes('increase-energy')) {
-          queryParams.protein_in_grams__gt = '15';
+          filteredDiets = filteredDiets.filter((diet: any) => 
+            diet.protein_in_grams > 15
+          );
         }
         
-        // Make parallel API calls for both diet types
-        const [ketoResults] = await Promise.all([
-          searchDiets(queryParams)
-            .then(data => data.results.map((item: any) => ({
-              id: item.id.toString(),
-              name: item.title,
-              description: `Healthy recipe with ${Math.round(item.nutrition?.nutrients.find((n: any) => n.name === 'Calories')?.amount || 0)} calories.`,
-              imageUrl: item.image,
-              nutritionalFacts: {
-                calories: Math.round(item.nutrition?.nutrients.find((n: any) => n.name === 'Calories')?.amount || 0),
-                protein: Math.round(item.nutrition?.nutrients.find((n: any) => n.name === 'Protein')?.amount || 0),
-                carbs: Math.round(item.nutrition?.nutrients.find((n: any) => n.name === 'Carbohydrates')?.amount || 0),
-                fat: Math.round(item.nutrition?.nutrients.find((n: any) => n.name === 'Fat')?.amount || 0),
-              },
-              benefits: [
-                'Nutritionally balanced',
-                `${Math.round(item.nutrition?.nutrients.find((n: any) => n.name === 'Protein')?.amount || 0)}g protein`,
-                `Only ${Math.round(item.nutrition?.nutrients.find((n: any) => n.name === 'Sugar')?.amount || 0)}g sugar`,
-              ],
-              tags: item.diets || [],
-            })))
-            .catch(err => {
-              console.error('Error fetching from API:', err);
-              return [];
-            }),
-          searchKetoDiets({ number: 3 })
-            .then(data => data.map((item: any) => mapKetoDietToAppDiet(item)))
-            .catch(err => {
-              console.error('Error fetching from Keto API:', err);
-              return [];
-            })
-        ]);
+        // Sort by relevance (for now, just sort by protein content as an example)
+        filteredDiets.sort((a: any, b: any) => 
+          (b.protein_in_grams || 0) - (a.protein_in_grams || 0)
+        );
         
-        // Combine results and sort by relevance to user preferences
-        const combinedResults = [...ketoResults];
+        // Take only the first 8 diets
+        const topDiets = filteredDiets.slice(0, 8);
         
-        // If we have results, set them
-        if (combinedResults.length > 0) {
-          setRecommendedDiets(combinedResults);
+        // Map to application diet format
+        const mappedDiets = topDiets.map((diet: any) => mapKetoDietToAppDiet(diet));
+        
+        console.log(`Found ${mappedDiets.length} recommended diets`);
+        
+        // Set the diets in state
+        if (mappedDiets.length > 0) {
+          setRecommendedDiets(mappedDiets);
         } else {
-          // Fallback to generic message if no results
-          setError("Unable to load recommendations. Please try again later.");
+          // Fallback if no filtered results found
+          const defaultDiets = ketoDiets.slice(0, 8).map((diet: any) => mapKetoDietToAppDiet(diet));
+          setRecommendedDiets(defaultDiets);
+          console.log('Using default recommendations as no filtered results were found');
         }
       } catch (err) {
         console.error('Error fetching recommendations:', err);
@@ -166,7 +149,7 @@ export default function RecommendationsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {recommendedDiets.map((diet) => (
               <Link 
                 key={diet.id} 

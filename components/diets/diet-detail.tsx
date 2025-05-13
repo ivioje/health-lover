@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, Heart, Plus, Folder, FolderPlus, LoaderIcon } from "lucide-react";
+import { Check, Heart, Plus, Folder, FolderPlus, LoaderIcon, X } from "lucide-react";
 import { getUserData, createCategory as createCategoryAPI, updateCategories, saveDiet, removeSavedDiet } from "@/lib/services/userService";
 import { toast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
@@ -29,6 +29,7 @@ export function DietDetail({ diet }: DietDetailProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [savingDiet, setSavingDiet] = useState(false);
+  const [addingToCategory, setAddingToCategory] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -59,6 +60,7 @@ export function DietDetail({ diet }: DietDetailProps) {
       });
       return;
     }
+    setAddingToCategory(true);
     setLoading(true);
     try {
       const updatedCategories = categories.map((category) => {
@@ -75,6 +77,7 @@ export function DietDetail({ diet }: DietDetailProps) {
       await updateCategories(updatedCategories);
       setCategories(updatedCategories);
     } finally {
+      setAddingToCategory(false);
       setLoading(false);
     }
   };
@@ -101,6 +104,7 @@ export function DietDetail({ diet }: DietDetailProps) {
   const createCategory = async () => {
     if (newCategoryName.trim()) {
       setLoading(true);
+      setAddingToCategory(true);
       try {
         const user = await createCategoryAPI(newCategoryName.trim());
         const newCat = user.categories[user.categories.length - 1];
@@ -115,6 +119,7 @@ export function DietDetail({ diet }: DietDetailProps) {
         setDialogOpen(false);
       } finally {
         setLoading(false);
+        setAddingToCategory(false);
       }
     }
   };
@@ -327,12 +332,23 @@ export function DietDetail({ diet }: DietDetailProps) {
                               >
                                 {isInCategory ? (
                                   <Check className="h-4 w-4 text-chart-5" />
-                                ) : loading ? (
+                                ) : addingToCategory ? (
                                   <LoaderIcon className="h-4 w-4 animate-spin" />
                                 ) : (
                                   <Plus className="h-4 w-4 text-chart-5" />
                                 )}
                                 
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-5 w-5 cursor-pointer hover:bg-gray-300">
+                                <X
+                                  className="h-4 w-4 text-red-500"
+                                  onClick={(e: { preventDefault: () => void; stopPropagation: () => void; }) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    deleteCategory(category._id);
+                                  }}
+                                />
+                                <span className="sr-only text-xs">Delete</span>
                               </Button>
                             </div>
                           </div>
@@ -370,7 +386,11 @@ export function DietDetail({ diet }: DietDetailProps) {
                         <Button variant="ghost" onClick={() => setDialogOpen(false)}>
                           Cancel
                         </Button>
+                        {addingToCategory ? 
+                        <Button onClick={createCategory}><span><LoaderIcon className="h-4 w-4 animate-spin" /></span>Creating...</Button> 
+                        : 
                         <Button onClick={createCategory}>Create</Button>
+                        }
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>

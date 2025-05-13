@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { Heart } from "lucide-react";
+import { Heart, LoaderIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { saveDiet, removeSavedDiet, getUserData } from "@/lib/services/userService";
 import { toast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ interface DietCardProps {
 export function DietCard({ diet, initialSaved = false }: DietCardProps) {
   const [isSaved, setIsSaved] = useState(initialSaved);
   const [isLoading, setIsLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const { data: session } = useSession();
   
   useEffect(() => {
@@ -51,7 +52,7 @@ export function DietCard({ diet, initialSaved = false }: DietCardProps) {
       });
       return;
     }
-    
+    setSaving(true);
     setIsLoading(true);
     
     try {
@@ -77,6 +78,7 @@ export function DietCard({ diet, initialSaved = false }: DietCardProps) {
         variant: "destructive",
       });
     } finally {
+      setSaving(false);
       setIsLoading(false);
     }
   };
@@ -109,9 +111,11 @@ export function DietCard({ diet, initialSaved = false }: DietCardProps) {
               onClick={toggleSave}
               disabled={isLoading}
             >
-              <Heart
-                className={`h-4 w-4 ${isSaved ? "fill-current" : ""} ${isLoading ? "animate-pulse" : ""}`}
-              />
+              {saving ? (
+                <LoaderIcon className="h-4 w-4 animate-spin text-gray-800" />
+              ) : <Heart
+              className={`h-4 w-4 ${isSaved ? "fill-current" : ""} ${isLoading ? "animate-pulse" : ""}`}
+            />}
             </Button>
           </div>
           <CardContent className="p-4">

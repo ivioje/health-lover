@@ -5,27 +5,7 @@ import { Button } from '../ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FolderPlus, Plus, X } from 'lucide-react';
-
-interface Diet {
-  id: string;
-  name?: string;
-  imageUrl?: string;
-  nutritionalFacts?: {
-    calories?: number;
-  };
-}
-
-interface CategoryTabsProps {
-  category: { id: string; name: string };
-  index: number;
-  categoryDiets: Diet[];
-  handleDeleteCategory: (categoryId: string) => void;
-  isLoading: boolean;
-  dietsLoading: boolean;
-  dietIndex?: number;
-  diet?: Diet;
-  removeDietFromCategory: (categoryId: string, dietId: string) => void;
-}
+import { CategoryTabsProps } from '@/lib/types';
 
 const CategoryTabs: React.FC<CategoryTabsProps> = ({ 
     category, 
@@ -60,7 +40,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
               </Button>
             </div>
   
-            {dietsLoading ? (
+            {dietsLoading && 
               <div className="flex flex-col space-y-3">
                 {[1, 2, 3].map((i) => (
                   <div 
@@ -75,7 +55,8 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
                   </div>
                 ))}
               </div>
-            ) : categoryDiets.length > 0 ? (
+            }
+            {categoryDiets.length > 0 && (
               <div className="space-y-3">
                 {categoryDiets.map((diet, dietIndex) => (
                   <div 
@@ -114,7 +95,8 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
                   </div>
                 ))}
               </div>
-            ) : (
+            )} 
+             {categoryDiets.length === 0 && !dietsLoading && (
               <div className="flex flex-col items-center justify-center h-[300px] text-center">
                 <FolderPlus className="h-12 w-12 text-muted-foreground mb-4 opacity-40" />
                 <p className="text-muted-foreground mb-4">
