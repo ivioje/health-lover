@@ -132,6 +132,7 @@ export default function DashboardPage() {
         <RecommendedDiets recommendedIds={recommendedDietIds} />
       </div>
 
+      <p>Categories below</p>
       <div className="mb-6">
         <DietCategories initialCategories={user.categories || []} />
       </div>

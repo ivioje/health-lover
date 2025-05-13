@@ -12,8 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, Heart, Plus, Folder, FolderPlus } from "lucide-react";
-import { getUserData, createCategory as createCategoryAPI, updateCategories } from "@/lib/services/userService";
+import { Check, Heart, Plus, Folder, FolderPlus, LoaderIcon } from "lucide-react";
+import { getUserData, createCategory as createCategoryAPI, updateCategories, saveDiet, removeSavedDiet } from "@/lib/services/userService";
 import { toast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
 
@@ -28,22 +28,29 @@ export function DietDetail({ diet }: DietDetailProps) {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [savingDiet, setSavingDiet] = useState(false);
 
   useEffect(() => {
     if (!session) return;
-    const fetchCategories = async () => {
+    const fetchUserData = async () => {
       try {
         const user = await getUserData();
+        // Update categories
         setCategories(user.categories || []);
-      } catch (e) {
-        toast({
-          title: "Failed to load categories",
-        })
         
+        // Check if this diet is already saved
+        const savedDiets = user.savedDiets || [];
+        setIsSaved(savedDiets.includes(diet.id));
+      } catch (e) {
+        console.error("Error fetching user data:", e);
+        toast({
+          title: "Failed to load user data",
+          variant: "destructive",
+        });
       }
     };
-    fetchCategories();
-  }, [session]);
+    fetchUserData();
+  }, [session, diet.id]);
 
   const addToCategory = async (categoryId: string) => {
     setLoading(true);
@@ -117,12 +124,48 @@ export function DietDetail({ diet }: DietDetailProps) {
     }
   };
 
-  function toggleSave(): void {
-    setIsSaved((prev) => !prev);
-    toast({
-      title: isSaved ? "Diet removed from saved" : "Diet saved successfully",
-    });
+  async function toggleSave(): Promise<void> {
+    if (!session) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to save diets",
+        variant: "destructive", 
+      });
+      return;
+    }
+    
+    setSavingDiet(true);
+    
+    try {
+      if (isSaved) {
+        // Remove from saved diets
+        await removeSavedDiet(diet.id);
+        toast({
+          title: "Diet removed",
+          description: "Diet removed from your saved collection",
+        });
+      } else {
+        // Add to saved diets
+        await saveDiet(diet.id);
+        toast({
+          title: "Diet saved",
+          description: "Diet saved to your collection",
+        });
+      }
+      
+      setIsSaved(!isSaved);
+    } catch (error) {
+      console.error("Error toggling saved diet:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update saved diets. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingDiet(false);
+    }
   }
+  
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-3 sm:px-10 md:px-16">
       <div className="lg:col-span-2 space-y-8">
@@ -239,9 +282,9 @@ export function DietDetail({ diet }: DietDetailProps) {
                 }`}
                 disabled={!session}
               >
-                <Heart
+                {savingDiet ? <LoaderIcon className="h-4 w-4 mr-2 animate-spin" /> : <Heart
                   className={`h-4 w-4 mr-2 ${isSaved ? "fill-current" : ""}`}
-                />
+                />}
                 {isSaved ? "Saved" : "Save Diet"}
               </Button>
 
@@ -261,20 +304,45 @@ export function DietDetail({ diet }: DietDetailProps) {
                         return (
                           <div
                             key={category.id}
-                            className="flex items-center justify-between p-2 hover:bg-accent rounded-md cursor-pointer"
-                            onClick={() =>
-                              isInCategory
-                                ? removeFromCategory(category.id)
-                                : addToCategory(category.id)
-                            }
+                            className="flex items-center justify-between p-2 hover:bg-accent rounded-md"
                           >
-                            <span>{category.name}</span>
-                            {isInCategory ? (
-                              <Check className="h-4 w-4 text-chart-5" />
-                            ) : (
-                              <Plus className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            <Button variant="ghost" onClick={() => deleteCategory(category.id)} disabled={loading}>Delete</Button>
+                            <span className="truncate mr-2">{category.name}</span>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 p-0"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (!loading) {
+                                    isInCategory ? removeFromCategory(category.id) : addToCategory(category.id);
+                                  }
+                                }}
+                                disabled={loading}
+                              >
+                                {isInCategory ? (
+                                  <Check className="h-4 w-4 text-chart-5" />
+                                ) : (
+                                  <Plus className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-1 text-xs text-muted-foreground hover:text-destructive"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (!loading) {
+                                    deleteCategory(category.id);
+                                  }
+                                }}
+                                disabled={loading}
+                              >
+                                Delete
+                              </Button>
+                            </div>
                           </div>
                         );
                       })}

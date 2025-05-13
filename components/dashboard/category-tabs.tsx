@@ -40,7 +40,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
     }) => {
     return (
         <TabsContent 
-          key={`content-${category.id}-${index}`} 
+          key={category.id} 
           value={category.id} 
           className="mt-0"
         >
@@ -82,7 +82,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
               <div className="space-y-3">
                 {categoryDiets.map((diet, dietIndex) => (
                   <div 
-                    key={`diet-${diet.id}-${dietIndex}`}
+                    key={diet.id}
                     className="flex items-center gap-3 p-2 rounded-lg bg-background/60 border border-border/30 hover:bg-background/80"
                   >
                     <div className="relative h-12 w-12 rounded-md overflow-hidden flex-shrink-0">

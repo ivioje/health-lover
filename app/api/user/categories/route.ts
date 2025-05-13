@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
-import UserModel from '@/lib/models/userModel';
+import userModel from '@/lib/models/userModel';
 
 //add categories
 export async function POST(request: NextRequest) {
@@ -13,13 +13,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email parameter is required' }, { status: 400 });
     }
     
-    const { name } = await request.json();
-    if (!name) {
+    const { category_name } = await request.json();
+    if (!category_name) {
       return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
     }
     
-    const category = { name, dietIds: [] };
-    const updatedUser = await UserModel.findOneAndUpdate(
+    const category = { category_name, dietIds: [] };
+    const updatedUser = await userModel.findOneAndUpdate(
       { email },
       { 
         $push: { categories: category },
@@ -53,7 +53,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Categories array is required' }, { status: 400 });
     }
     
-    const updatedUser = await UserModel.findOneAndUpdate(
+    const updatedUser = await userModel.findOneAndUpdate(
       { email },
       { 
         $set: { categories },

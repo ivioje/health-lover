@@ -10,7 +10,7 @@ const HealthPredictionSchema = new Schema({
   description: String,
 });
 
-// schema for user preferences
+// user preferences
 const PreferenceSchema = new Schema({
   dietaryRestrictions: [String],
   healthGoals: [String],
@@ -18,9 +18,9 @@ const PreferenceSchema = new Schema({
   age: Number,
 });
 
-// schema for categories
+// categories
 const CategorySchema = new Schema({
-  name: String,
+  category_name: String,
   dietIds: [String],
 });
 

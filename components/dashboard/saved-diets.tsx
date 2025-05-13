@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Diet } from "@/lib/types";
-import { diets as allDiets } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -11,6 +10,7 @@ import { Heart as HeartIcon, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { removeSavedDiet } from "@/lib/services/userService";
 import { toast } from "@/hooks/use-toast";
+import { searchKetoDiets, mapKetoDietToAppDiet } from "@/lib/api";
 
 interface SavedDietsProps {
   savedIds: string[];
@@ -21,8 +21,35 @@ export default function SavedDiets({ savedIds }: SavedDietsProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const foundDiets = allDiets.filter(diet => savedIds.includes(diet.id));
-    setSavedDiets(foundDiets);
+    const fetchSavedDiets = async () => {
+      if (!savedIds || savedIds.length === 0) {
+        setSavedDiets([]);
+        return;
+      }
+      
+      setIsLoading(true);
+      try {
+        const apiDiets = await searchKetoDiets();
+        if (apiDiets && Array.isArray(apiDiets)) {
+          const mapped = apiDiets
+            .filter(diet => diet && diet.id && savedIds.includes(diet.id.toString()))
+            .map(diet => mapKetoDietToAppDiet(diet));
+          
+          setSavedDiets(mapped);
+        }
+      } catch (error) {
+        console.error("Error fetching saved diets:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load saved diets. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSavedDiets();
   }, [savedIds]);
   
   const handleRemoveDiet = async (dietId: string, event: React.MouseEvent) => {
@@ -68,7 +95,19 @@ export default function SavedDiets({ savedIds }: SavedDietsProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {savedDiets.length === 0 ? (
+        {isLoading ? (
+          <div className="flex space-x-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="min-w-[280px] max-w-[300px] rounded-lg overflow-hidden border border-border/50 bg-card/60 backdrop-blur-sm">
+                <div className="h-36 w-full bg-muted animate-pulse"></div>
+                <div className="p-4 space-y-2">
+                  <div className="h-5 bg-muted animate-pulse rounded"></div>
+                  <div className="h-4 bg-muted animate-pulse rounded w-2/3"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : savedDiets.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-6 text-center">
             <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-3">
               <HeartIcon className="h-5 w-5 text-muted-foreground" />

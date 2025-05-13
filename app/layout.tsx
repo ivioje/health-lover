@@ -5,6 +5,7 @@ import { Navigation } from "@/components/layout/navigation";
 import { Footer } from "@/components/layout/footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/components/auth/session-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,6 +31,7 @@ export default function RootLayout({
           <SessionProvider>
             <div className="flex flex-col min-h-screen">
               <Navigation />
+              <Toaster />
               <main className="flex-1">{children}</main>
               <Footer />
             </div>

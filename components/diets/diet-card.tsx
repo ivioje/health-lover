@@ -8,19 +8,77 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { saveDiet, removeSavedDiet, getUserData } from "@/lib/services/userService";
+import { toast } from "@/hooks/use-toast";
+import { useSession } from "next-auth/react";
 
 interface DietCardProps {
   diet: Diet;
+  initialSaved?: boolean;
 }
 
-export function DietCard({ diet }: DietCardProps) {
-  const [isSaved, setIsSaved] = useState(false);
+export function DietCard({ diet, initialSaved = false }: DietCardProps) {
+  const [isSaved, setIsSaved] = useState(initialSaved);
+  const [isLoading, setIsLoading] = useState(false);
+  const { data: session } = useSession();
+  
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (session?.user) {
+        try {
+          const userData = await getUserData();
+          const savedDiets = userData.savedDiets || [];
+          setIsSaved(savedDiets.includes(diet.id));
+        } catch (error) {
+          console.error("Error checking saved status:", error);
+        }
+      }
+    };
+    
+    checkIfSaved();
+  }, [diet.id, session]);
 
-  const toggleSave = (e: React.MouseEvent) => {
+  const toggleSave = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsSaved(!isSaved);
+    
+    if (!session?.user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to save diets",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      if (isSaved) {
+        await removeSavedDiet(diet.id);
+        toast({
+          title: "Diet removed",
+          description: "Diet removed from your saved collection",
+        });
+      } else {
+        await saveDiet(diet.id);
+        toast({
+          title: "Diet saved",
+          description: "Diet saved to your collection",
+        });
+      }
+      setIsSaved(!isSaved);
+    } catch (error) {
+      console.error("Error toggling saved diet:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update saved diets. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,9 +107,10 @@ export function DietCard({ diet }: DietCardProps) {
                   : "bg-background/80 backdrop-blur-sm"
               }`}
               onClick={toggleSave}
+              disabled={isLoading}
             >
               <Heart
-                className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`}
+                className={`h-4 w-4 ${isSaved ? "fill-current" : ""} ${isLoading ? "animate-pulse" : ""}`}
               />
             </Button>
           </div>

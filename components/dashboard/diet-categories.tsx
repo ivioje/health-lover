@@ -1,14 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { Diet, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { FolderPlus, Folder, Plus, X } from "lucide-react";
 import { searchKetoDiets, mapKetoDietToAppDiet } from "@/lib/api";
 import { TabsContent, TabsTrigger } from "@/components/ui/tabs";
@@ -26,7 +23,7 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
   const [categories, setCategories] = useState<Category[]>(initialCategories || []);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>(
-    categories.length > 0 ? categories[0]?.id : ""
+    initialCategories && initialCategories.length > 0 ? initialCategories[0]?.id : ""
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,45 +50,49 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
         }
 
         const userSavedDiets = userData.savedDiets || [];
-        const dietsList: Diet[] = userSavedDiets.map((dietId) => {
-          const diet = diets.find((d) => d.id === dietId);
-          return diet || { 
-            id: dietId, 
-            name: "Unknown Diet", 
-            imageUrl: "", 
-            nutritionalFacts: { 
-              calories: 0, 
-              protein: 0, 
-              carbs: 0, 
-              fat: 0 
-            }, 
-            description: "No description available", 
-            tags: [], 
-            benefits: [], 
-            sampleMeals: [] 
-          };
+        const dietsMap: Record<string, Diet> = {};
+        
+        diets.forEach(diet => {
+          if (diet.id) {
+            dietsMap[diet.id] = diet;
+          }
         });
         
-        const userDietIds = new Set(userSavedDiets);
-        const missingDietIds = Array.from(allDietIds).filter(id => !userDietIds.has(id));
-        
-        if (missingDietIds.length > 0) {
-          try {
-            const ketoDiets = await searchKetoDiets();
-            for (const id of missingDietIds) {
-              const ketoDiet = ketoDiets.find((d: { id: { toString: () => string; }; }) => d.id.toString() === id);
+        try {
+          const ketoDiets = await searchKetoDiets();
+          
+          Array.from(allDietIds).forEach(dietId => {
+            if (!dietsMap[dietId]) {
+              const ketoDiet = ketoDiets.find((d: { id: { toString: () => string; }; }) => d.id.toString() === dietId);
+              
               if (ketoDiet) {
-                dietsList.push(mapKetoDietToAppDiet(ketoDiet));
+                dietsMap[dietId] = mapKetoDietToAppDiet(ketoDiet);
+              } else {
+                dietsMap[dietId] = { 
+                  id: dietId, 
+                  name: "Diet " + dietId.substring(0, 5), 
+                  imageUrl: "/assets/placeholder.jpg", 
+                  nutritionalFacts: { 
+                    calories: 0, 
+                    protein: 0, 
+                    carbs: 0, 
+                    fat: 0 
+                  }, 
+                  description: "Details not available", 
+                  tags: [], 
+                  benefits: [], 
+                  sampleMeals: [] 
+                };
               }
             }
-          } catch (error) {
-            console.error("Error fetching keto diets:", error);
-          }
+          });
+          
+          setDiets(Object.values(dietsMap));
+        } catch (error) {
+          console.error("Error fetching diets:", error);
         }
-        
-        setDiets(dietsList);
       } catch (error) {
-        console.error("Error fetching diets:", error);
+        console.error("Error fetching user data:", error);
         toast({
           title: "Error",
           description: "Failed to load diet information",
@@ -263,47 +264,44 @@ export function DietCategories({ initialCategories }: DietCategoriesProps) {
     );
   }
 
-  const tabTriggers = categories.map((category, index) => (
-    <TabsTrigger
-      key={`trigger-${category.id}-${index}`}
-      value={category.id}
-      className="flex items-center gap-1 data-[state=active]:bg-chart-5/10 data-[state=active]:text-chart-5"
-    >
-      <Folder className="h-4 w-4" />
-      <span>{category.name}</span>
-    </TabsTrigger>
-  ));
-
-  const tabContents = categories.map((category, index) => {
-    const categoryDiets = getDietsForCategory(category.id);
-    
-    return (
-      <CategoryTabs 
-        key={`content-${category.id}-${index}`}
-        category={category}
-        index={index}
-        categoryDiets={categoryDiets}
-        handleDeleteCategory={handleDeleteCategory}
-        isLoading={isLoading}
-        dietsLoading={dietsLoading}
-        dietIndex={index}
-        diet={diets[index]}
-        removeDietFromCategory={removeDietFromCategory}
-      />
-    );
-  });
-
-  <CreateCategory 
-    isDialogOpen={isDialogOpen}
-    setIsDialogOpen={setIsDialogOpen}
-    newCategoryName={newCategoryName}
-    setNewCategoryName={setNewCategoryName}
-    isLoading={isLoading}
-    handleCreateCategory={handleCreateCategory}
-    activeCategory={activeCategory}
-    setActiveCategory={setActiveCategory}
-    categories={categories}
-    tabTriggers={tabTriggers}
-    tabContents={tabContents}
-  />
+  return (
+    <CreateCategory 
+      isDialogOpen={isDialogOpen}
+      setIsDialogOpen={setIsDialogOpen}
+      newCategoryName={newCategoryName}
+      setNewCategoryName={setNewCategoryName}
+      isLoading={isLoading}
+      handleCreateCategory={handleCreateCategory}
+      activeCategory={activeCategory}
+      setActiveCategory={setActiveCategory}
+      categories={categories}
+      tabTriggers={categories.map((category, index) => (
+        <TabsTrigger
+          key={category.id}
+          value={category.id}
+          onClick={() => console.log(category.id)}
+          className="flex items-center gap-1 data-[state=active]:bg-chart-5/10 data-[state=active]:text-chart-5"
+        >
+          <Folder className="h-4 w-4" />
+          <span>{category.name}</span>
+        </TabsTrigger>
+      ))}
+      tabContents={categories.map((category, index) => {
+        const categoryDiets = getDietsForCategory(category.id);
+        return (
+          <TabsContent key={category.id} value={category.id}>
+            <CategoryTabs
+              category={category}
+              index={index}
+              categoryDiets={categoryDiets}
+              handleDeleteCategory={handleDeleteCategory}
+              isLoading={isLoading}
+              dietsLoading={dietsLoading}
+              removeDietFromCategory={removeDietFromCategory}
+            />
+          </TabsContent>
+        );
+      })}
+    />
+  );
 }
