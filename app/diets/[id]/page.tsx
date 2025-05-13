@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import DietDetailClient from "@/components/diets/diet-detail-client";
+
 interface DietPageParams {
   params: { id: string };
   searchParams?: { [key: string]: string | string[] | undefined };
