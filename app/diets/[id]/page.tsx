@@ -1,6 +1,10 @@
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import DietDetailClient from "@/components/diets/diet-detail-client";
+interface DietPageParams {
+  params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
 
 export function generateStaticParams() {
   return [];
@@ -8,10 +12,8 @@ export function generateStaticParams() {
 
 export default async function DietDetailPage({
   params,
-}: {
-  params: { id: string };
-}) {
-  const id = await params.id;
+}: DietPageParams) {
+  const id = params.id;
   
   return (
     <div className="container py-8 md:py-12">
