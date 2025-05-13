@@ -7,90 +7,70 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { FolderPlus, Folder, Plus, X } from "lucide-react";
-import { searchKetoDiets, mapKetoDietToAppDiet } from "@/lib/api";
 import { TabsContent, TabsTrigger } from "@/components/ui/tabs";
-import { updateCategories, createCategory, getUserData } from "@/lib/services/userService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import CreateCategory from "./create-category";
 import CategoryTabs from "./category-tabs";
+import { useCategoryStore } from "@/lib/stores/categoryStore"; 
+import { useDietStore } from "@/lib/stores/dietStore";
 
 interface DietCategoriesProps {
   userCategories: Category[];
 }
 
 export function DietCategories({ userCategories }: DietCategoriesProps) {
-  const [categories, setCategories] = useState<Category[]>(userCategories || []);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string>(
-    userCategories && userCategories.length > 0 ? userCategories[0]?._id : ""
-  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [diets, setDiets] = useState<Diet[]>([]);
   const [dietsLoading, setDietsLoading] = useState(true);
-
+  const [searchQuery, setSearchQuery] = useState("");
+  const [operation, setOperation] = useState("loading");
+  
+  const { 
+    categories, 
+    activeCategory, 
+    setActiveCategory,
+    setCategories,
+    isLoading, 
+    createCategory: createCategoryAction,
+    deleteCategory,
+    removeDietFromCategory: removeDietAction
+  } = useCategoryStore();
+  const { diets, fetchDiets, searchDiets, isLoading: dietsStoreLoading } = useDietStore();
+  
   useEffect(() => {
-    const fetchDiets = async () => {
+    if (userCategories?.length > 0) {
+      setCategories(userCategories);
+      setActiveCategory(userCategories[0]?._id || "");
+    }
+  }, [userCategories, setCategories, setActiveCategory]);
+  
+  useEffect(() => {
+    const loadDietsForCategories = async () => {
+      setOperation("loading");
       setDietsLoading(true);
-      try {
-        const userData = await getUserData();
-    
-        const allDietIds = new Set<string>();
-        categories.forEach(category => {
-          if (category.dietIds) {
-            category.dietIds.forEach(id => allDietIds.add(id));
-          }
-        });
-        
-        if (allDietIds.size === 0) {
-          setDiets([]);
-          setDietsLoading(false);
-          return;
+      
+      const allDietIds = new Set<string>();
+      categories.forEach(category => {
+        if (category.dietIds) {
+          category.dietIds.forEach(id => allDietIds.add(id));
         }
-        
-        const dietsMap: Record<string, Diet> = {};
-        diets.forEach(diet => {
-          if (diet.id) {
-            dietsMap[diet.id] = diet;
-          }
-        });
-        
-        try {
-          const ketoDiets = await searchKetoDiets();
-          
-          Array.from(allDietIds).forEach(dietId => {
-            if (!dietsMap[dietId]) {
-              const ketoDiet = ketoDiets.find((d: { id: { toString: () => string; }; }) => d.id.toString() === dietId);
-              
-              if (ketoDiet) {
-                dietsMap[dietId] = mapKetoDietToAppDiet(ketoDiet);
-              } else {
-                dietsMap[dietId] = { 
-                  id: dietId, 
-                  name: "Diet " + dietId.substring(0, 5), 
-                  imageUrl: "/assets/placeholder.jpg", 
-                  nutritionalFacts: { 
-                    calories: 0, 
-                    protein: 0, 
-                    carbs: 0, 
-                    fat: 0 
-                  }, 
-                  description: "Details not available", 
-                  tags: [], 
-                  benefits: [], 
-                  sampleMeals: [] 
-                };
-              }
-            }
-          });
-          
-          setDiets(Object.values(dietsMap));
-        } catch (error) {
-          console.error("Error fetching diets:", error);
+      });
+      
+      if (allDietIds.size === 0) {
+        setDietsLoading(false);
+        setOperation("empty");
+        return;
+      }
+
+      try {
+        if (searchQuery) {
+          await searchDiets(searchQuery);
+        } else {
+          await fetchDiets();
         }
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error("Error fetching diets:", error);
         toast({
           title: "Error",
           description: "Failed to load diet information",
@@ -98,69 +78,30 @@ export function DietCategories({ userCategories }: DietCategoriesProps) {
         });
       } finally {
         setDietsLoading(false);
+        setOperation("");
       }
     };
 
-    fetchDiets();
-  }, [categories]);
+    loadDietsForCategories();
+  }, [categories, fetchDiets, searchQuery, searchDiets]);
+  
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setOperation("searching");
+  };
 
   const handleCreateCategory = async () => {
     if (newCategoryName.trim()) {
-      setIsLoading(true);
-      try {
-        const userData = await createCategory(newCategoryName.trim());
-        setCategories(userData.categories);
-        
-        const newCategory = userData.categories[userData.categories.length - 1];
-        setActiveCategory(newCategory._id);
-        
+      const newCategory = await createCategoryAction(newCategoryName.trim());
+      if (newCategory) {
         setNewCategoryName("");
         setIsDialogOpen(false);
-        toast({
-          title: "Category created",
-          description: `"${newCategoryName.trim()}" has been created successfully.`,
-        });
-      } catch (error) {
-        console.error("Error creating category:", error);
-        toast({
-          title: "Error",
-          description: "Failed to create category. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
       }
     }
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
-    setIsLoading(true);
-    try {
-      const updatedCategories = categories.filter(
-        (category) => category._id !== categoryId
-      );
-      
-      await updateCategories(updatedCategories);
-      setCategories(updatedCategories);
-      
-      if (activeCategory === categoryId && updatedCategories.length > 0) {
-        setActiveCategory(updatedCategories[0]._id);
-      }
-      
-      toast({
-        title: "Category deleted",
-        description: "The category has been deleted successfully.",
-      });
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete category. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    await deleteCategory(categoryId);
   };
 
   const getDietsForCategory = (categoryId: string): Diet[] => {
@@ -171,38 +112,10 @@ export function DietCategories({ userCategories }: DietCategoriesProps) {
   };
 
   const removeDietFromCategory = async (categoryId: string, dietId: string) => {
-    setIsLoading(true);
-    try {
-      const updatedCategories = categories.map((category) => {
-        if (category._id === categoryId) {
-          return {
-            ...category,
-            dietIds: category.dietIds.filter((id) => id !== dietId),
-          };
-        }
-        return category;
-      });
-      
-      await updateCategories(updatedCategories);
-      setCategories(updatedCategories);
-      
-      toast({
-        title: "Diet removed",
-        description: "The diet has been removed from this category.",
-      });
-    } catch (error) {
-      console.error("Error removing diet from category:", error);
-      toast({
-        title: "Error",
-        description: "Failed to remove diet. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    await removeDietAction(categoryId, dietId);
   };
 
-  if (categories.length === 0) {
+  if (categories.length === 0 && operation === "empty") {
     return (
       <Card className="bg-card/80 backdrop-blur-sm border border-border/50">
         <CardHeader>
@@ -262,11 +175,18 @@ export function DietCategories({ userCategories }: DietCategoriesProps) {
     );
   }
 
+  if (categories.length === 0 && operation === "searching") {
+    return (
+      <div className="text-muted-foreground">No diet found for <i className="font-semibold">{searchQuery}</i></div>
+    )
+  }
+
+
   const tabTriggers = categories.map((category, index) => (
     <TabsTrigger
       key={category._id}
       value={category._id}
-      onClick={() => console.log(category._id)}
+      onClick={() => setActiveCategory(category._id)}
       className="flex items-center gap-1 data-[state=active]:bg-chart-5/10 data-[state=active]:text-chart-5"
     >
       <Folder className="h-4 w-4" />
@@ -284,13 +204,12 @@ export function DietCategories({ userCategories }: DietCategoriesProps) {
           categoryDiets={categoryDiets}
           handleDeleteCategory={handleDeleteCategory}
           isLoading={isLoading}
-          dietsLoading={dietsLoading}
+          dietsLoading={dietsLoading || dietsStoreLoading}
           removeDietFromCategory={removeDietFromCategory}
         />
       </TabsContent>
     );
   });
-
   return (
     <CreateCategory 
       isDialogOpen={isDialogOpen}
@@ -304,6 +223,8 @@ export function DietCategories({ userCategories }: DietCategoriesProps) {
       categories={categories.map(({ _id, name }) => ({ id: _id, name }))}
       tabTriggers={tabTriggers}
       tabContents={tabContents}
+      searchQuery={searchQuery}
+      handleSearch={handleSearch}
     />
   );
 }

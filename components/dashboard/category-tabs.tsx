@@ -56,7 +56,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
                 ))}
               </div>
             }
-            {categoryDiets.length > 0 && (
+            {categoryDiets.length > 0 && !dietsLoading && (
               <div className="space-y-3">
                 {categoryDiets.map((diet, dietIndex) => (
                   <div 
@@ -115,4 +115,4 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
       );
 }
 
-export default CategoryTabs
+export default CategoryTabs;

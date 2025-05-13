@@ -163,6 +163,8 @@ export interface CreateCategoryProps {
     categories: { id: string; name: string }[];
     tabTriggers: React.ReactNode;
     tabContents: React.ReactNode;
+    searchQuery?: string;
+    handleSearch?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export interface DietCategory {

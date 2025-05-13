@@ -19,18 +19,28 @@ const CreateCategory: React.FC<CreateCategoryProps> = ({
     setActiveCategory, 
     categories, 
     tabTriggers, 
-    tabContents 
-    }) => {
+    tabContents,
+    searchQuery,
+    handleSearch 
+    })=> {
     return (
         <Card className="bg-card/80 backdrop-blur-sm border border-border/50">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>My Diet Categories</CardTitle>
-                <CardDescription>
-                  Organize your saved diets into custom categories
-                </CardDescription>
-              </div>
+          <CardHeader className="flex items-center justify-between">
+            <div>
+              <CardTitle>My Diet Categories</CardTitle>
+              <CardDescription>
+                Organize your saved diets into custom categories
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {handleSearch && (
+                <Input
+                  placeholder="Search diets..."
+                  className="h-9 w-[180px]"
+                  value={searchQuery || ''}
+                  onChange={handleSearch}
+                />
+              )}
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm" variant="outline" className="gap-1">
@@ -81,7 +91,7 @@ const CreateCategory: React.FC<CreateCategoryProps> = ({
             </Tabs>
           </CardContent>
         </Card>
-      );
+    )
 }
 
-export default CreateCategory
+export default CreateCategory;
