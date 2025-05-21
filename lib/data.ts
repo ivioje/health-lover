@@ -7,6 +7,7 @@ export const routes = [
   { name: "Diet Gallery", href: "/diets", icon: Salad },
   { name: "Dashboard", href: "/dashboard", icon: BarChart2 },
   { name: "Preferences", href: "/preferences", icon: User },
+  { name: "For You", href: "/recommendations", icon: ChefHat },
 ];
 
 export const dietaryRestrictionOptions = [
@@ -178,24 +179,6 @@ export const diets: Diet[] = [
     ],
     tags: ['brain-health', 'heart-healthy', 'anti-inflammatory'],
     sampleMeals: []
-  },
-];
-
-export const mockCategories: Category[] = [
-  {
-    id: '1',
-    name: 'Breakfasts',
-    dietIds: ['1', '4', '7'],
-  },
-  {
-    id: '2',
-    name: 'Low Carb Options',
-    dietIds: ['3', '5'],
-  },
-  {
-    id: '3',
-    name: 'Heart Healthy',
-    dietIds: ['1', '2', '8'],
   },
 ];
 

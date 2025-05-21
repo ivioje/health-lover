@@ -44,6 +44,7 @@ export async function getDietById(id: number) {
 export async function searchKetoDiets(params: SearchParams = {}) {
   try {
     const response = await ketoApi.get('/', { params });
+    console.log("Keto diets response:", response.data);
     return response.data;
   } catch (error) {
     console.error('Error searching keto diets:', error);

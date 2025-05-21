@@ -22,10 +22,10 @@ export function DietGallery() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
   
-  const [proteinMin, setProteinMin] = useState("5");
-  const [proteinMax, setProteinMax] = useState("30");
-  const [carbsMax, setCarbsMax] = useState("20");
-  const [caloriesMax, setCaloriesMax] = useState("500");
+  const [proteinMin, setProteinMin] = useState("0");
+  const [proteinMax, setProteinMax] = useState("500");
+  const [carbsMax, setCarbsMax] = useState("500");
+  const [caloriesMax, setCaloriesMax] = useState("2000");
   
   useEffect(() => {
     loadInitialApiData();
@@ -37,10 +37,10 @@ export function DietGallery() {
     
     try {
       const params: SearchParams = {
-        protein_in_grams__gt: "5",
-        protein_in_grams__lt: "30",
-        carbohydrates_in_grams__lt: "20",
-        calories__lt: "500"
+        protein_in_grams__gt: "0",
+        protein_in_grams__lt: "500",
+        carbohydrates_in_grams__lt: "500",
+        calories__lt: "2000"
       };
       
       const response = await searchKetoDiets(params);

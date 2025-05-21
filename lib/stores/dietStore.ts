@@ -34,6 +34,7 @@ export const useDietStore = create<DietState>((set, get) => ({
       
       if (apiDiets && Array.isArray(apiDiets)) {
         const mappedDiets = apiDiets.map((diet) => mapKetoDietToAppDiet(diet));
+        console.log("Fetched diets:", mappedDiets);
         set({ diets: mappedDiets });
       }
     } catch (error) {
