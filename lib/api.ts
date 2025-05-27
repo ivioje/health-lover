@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { KetoDiet, SearchParams } from './types';
+import { KetoDiet, PersonalizedRequest, RecipeRecommendation, RecommendationRequest, RecommendationResponse, SearchParams } from './types';
 
 const RAPID_API_KEY = process.env.NEXT_PUBLIC_RAPIDAPI_KEY;
 
@@ -9,6 +9,17 @@ const ketoApi = axios.create({
   headers: {
     'x-rapidapi-key': RAPID_API_KEY,
     'x-rapidapi-host': 'keto-diet.p.rapidapi.com',
+  },
+});
+
+// FastAPI backend configuration
+const FASTAPI_BASE_URL = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+
+// FastAPI client
+const fastApiClient = axios.create({
+  baseURL: FASTAPI_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
   },
 });
 
@@ -167,6 +178,133 @@ export function mapKetoDietToAppDiet(ketoDiet: KetoDiet) {
       prepTime: ketoDiet.prep_time_in_minutes || 0,
       cookTime: ketoDiet.cook_time_in_minutes || 0,
       difficulty: ketoDiet.difficulty || 'Easy'
+    }
+  };
+}
+
+// FastAPI recommendation functions
+export async function getPersonalizedRecommendations(request: PersonalizedRequest): Promise<RecommendationResponse> {
+  try {
+    const response = await fastApiClient.post('/recommendations/personalized', request);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting personalized recommendations:', error);
+    throw error;
+  }
+}
+
+export async function getContentBasedRecommendations(request: RecommendationRequest): Promise<RecommendationResponse> {
+  try {
+    const response = await fastApiClient.post('/recommendations/content-based', request);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting content-based recommendations:', error);
+    throw error;
+  }
+}
+
+export async function getHybridRecommendations(request: RecommendationRequest & { content_weight?: number }): Promise<RecommendationResponse> {
+  try {
+    const response = await fastApiClient.post('/recommendations/hybrid', request);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting hybrid recommendations:', error);
+    throw error;
+  }
+}
+
+export async function getTrendingRecipes(num_recommendations: number = 10): Promise<{ trending_recipes: RecipeRecommendation[], total_count: number }> {
+  try {
+    const response = await fastApiClient.get(`/recommendations/trending?num_recommendations=${num_recommendations}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting trending recipes:', error);
+    throw error;
+  }
+}
+
+export async function getSimilarRecipes(recipe_id: number, num_recommendations: number = 5): Promise<{ recipe_id: number, similar_recipes: RecipeRecommendation[], total_count: number }> {
+  try {
+    const response = await fastApiClient.get(`/recommendations/similar/${recipe_id}?num_recommendations=${num_recommendations}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting similar recipes:', error);
+    throw error;
+  }
+}
+
+export async function getRecommendationCategories(): Promise<{ categories: string[], total_count: number }> {
+  try {
+    const response = await fastApiClient.get('/recommendations/categories');
+    return response.data;
+  } catch (error) {
+    console.error('Error getting recommendation categories:', error);
+    throw error;
+  }
+}
+
+export async function getRecommendationSystemStats(): Promise<any> {
+  try {
+    const response = await fastApiClient.get('/recommendations/stats');
+    return response.data;
+  } catch (error) {
+    console.error('Error getting recommendation system stats:', error);
+    throw error;
+  }
+}
+
+export async function checkRecommendationHealth(): Promise<any> {
+  try {
+    const response = await fastApiClient.get('/recommendations/health');
+    return response.data;
+  } catch (error) {
+    console.error('Error checking recommendation service health:', error);
+    throw error;
+  }
+}
+
+// map FastAPI recommendations to app diet format
+export function mapFastAPIRecommendationToAppDiet(recommendation: RecipeRecommendation) {
+  const totalTime = (recommendation.prep_time_in_minutes || 0) + (recommendation.cook_time_in_minutes || 0);
+  
+  return {
+    id: recommendation.id.toString(),
+    name: recommendation.recipe,
+    description: `${recommendation.difficulty || 'Easy'} recipe with ${recommendation.nutritional_info.protein_in_grams || 0}g protein and only ${recommendation.nutritional_info.carbohydrates_in_grams || 0}g carbs. Ready in ${totalTime} minutes. ${recommendation.reason}`,
+    imageUrl: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=2053&auto=format&fit=crop",
+    tags: [
+      recommendation.category?.toLowerCase().replace(/\s+/g, '-') || 'recipe',
+      recommendation.difficulty?.toLowerCase() || 'easy',
+      recommendation.nutritional_info.calories && recommendation.nutritional_info.calories < 300 ? 'low-calorie' : 'moderate-calorie',
+      recommendation.nutritional_info.protein_in_grams && recommendation.nutritional_info.protein_in_grams > 20 ? 'high-protein' : 'moderate-protein',
+      recommendation.nutritional_info.carbohydrates_in_grams && recommendation.nutritional_info.carbohydrates_in_grams < 20 ? 'low-carb' : 'moderate-carb'
+    ].filter(Boolean),
+    nutritionalFacts: {
+      calories: recommendation.nutritional_info.calories || 0,
+      protein: recommendation.nutritional_info.protein_in_grams || 0,
+      carbs: recommendation.nutritional_info.carbohydrates_in_grams || 0,
+      fat: recommendation.nutritional_info.fat_in_grams || 0
+    },
+    benefits: [
+      "AI-recommended recipe",
+      `${recommendation.nutritional_info.calories || 0} calories per serving`,
+      `Contains ${recommendation.nutritional_info.protein_in_grams || 0}g of protein`,
+      `Only ${recommendation.nutritional_info.carbohydrates_in_grams || 0}g of carbohydrates`,
+      recommendation.reason
+    ],
+    sampleMeals: [
+      {
+        name: recommendation.recipe,
+        description: recommendation.reason
+      }
+    ],
+    recipe: {
+      ingredients: [],
+      directions: [],
+      servings: recommendation.serving || 1,
+      prepTime: recommendation.prep_time_in_minutes || 0,
+      cookTime: recommendation.cook_time_in_minutes || 0,
+      difficulty: recommendation.difficulty || 'Easy'
     }
   };
 }

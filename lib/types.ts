@@ -187,3 +187,49 @@ export interface CategoryTabsProps {
   diet?: DietCategory;
   removeDietFromCategory: (categoryId: string, dietId: string) => void;
 }
+
+// Types for FastAPI integration
+export interface UserPreferences {
+  dietary_restrictions: string[];
+  health_goals: string[];
+  activity_level: string;
+  preferred_cuisines?: string[];
+  disliked_ingredients?: string[];
+}
+
+export interface RecommendationRequest {
+  user_id: string;
+  preferences: UserPreferences;
+  num_recommendations?: number;
+}
+
+export interface PersonalizedRequest extends RecommendationRequest {
+  liked_recipes: number[];
+}
+
+export interface NutritionalInfo {
+  calories?: number;
+  protein_in_grams?: number;
+  carbohydrates_in_grams?: number;
+  fat_in_grams?: number;
+}
+
+export interface RecipeRecommendation {
+  id: number;
+  recipe: string;
+  category?: string;
+  difficulty?: string;
+  prep_time_in_minutes?: number;
+  cook_time_in_minutes?: number;
+  serving?: number;
+  nutritional_info: NutritionalInfo;
+  confidence_score: number;
+  reason: string;
+}
+
+export interface RecommendationResponse {
+  recommendations: RecipeRecommendation[];
+  total_count: number;
+  algorithm_used: string;
+  user_id: string;
+}

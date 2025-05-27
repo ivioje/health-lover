@@ -7,7 +7,7 @@ import { ShieldCheck, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { searchDiets, searchKetoDiets, mapKetoDietToAppDiet } from "@/lib/api";
+import { searchDiets, searchKetoDiets, mapKetoDietToAppDiet, getPersonalizedRecommendations, getHybridRecommendations, mapFastAPIRecommendationToAppDiet, UserPreferences } from "@/lib/api";
 import { Diet } from "@/lib/types";
 
 export default function RecommendationsPage() {
@@ -15,8 +15,7 @@ export default function RecommendationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchRecommendations = async () => {
+  useEffect(() => {    const fetchRecommendations = async () => {
       try {
         setLoading(true);
         
@@ -25,7 +24,51 @@ export default function RecommendationsPage() {
         const dietaryRestrictions = userPreferences.dietaryRestrictions || [];
         const healthGoals = userPreferences.healthGoals || [];
         const activityLevel = userPreferences.activityLevel || 'moderate';
-                
+        
+        // Try FastAPI backend first
+        try {
+          const userId = localStorage.getItem('userId') || 'default_user';
+          
+          const fastApiPreferences: UserPreferences = {
+            dietary_restrictions: dietaryRestrictions,
+            health_goals: healthGoals,
+            activity_level: activityLevel,
+            preferred_cuisines: userPreferences.preferredCuisines || [],
+            disliked_ingredients: userPreferences.dislikedIngredients || []
+          };
+
+          const request = {
+            user_id: userId,
+            preferences: fastApiPreferences,
+            num_recommendations: 8
+          };
+
+          // Try personalized recommendations if user has liked recipes
+          const likedRecipes = JSON.parse(localStorage.getItem('likedRecipes') || '[]');
+          let fastApiResponse;
+          
+          if (likedRecipes.length > 0) {
+            fastApiResponse = await getPersonalizedRecommendations({
+              ...request,
+              liked_recipes: likedRecipes
+            });
+          } else {
+            fastApiResponse = await getHybridRecommendations(request);
+          }
+
+          if (fastApiResponse && fastApiResponse.recommendations.length > 0) {
+            const mappedDiets = fastApiResponse.recommendations.map(rec => 
+              mapFastAPIRecommendationToAppDiet(rec)
+            );
+            setRecommendedDiets(mappedDiets);
+            console.log(`Found ${mappedDiets.length} AI-recommended diets`);
+            return;
+          }
+        } catch (fastApiError) {
+          console.log('FastAPI recommendations failed, falling back to existing logic:', fastApiError);
+        }
+        
+        // Fallback to existing recommendation logic
         const ketoDiets = await searchKetoDiets({ number: 20 });
         let filteredDiets = ketoDiets;
         
