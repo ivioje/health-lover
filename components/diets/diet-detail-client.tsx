@@ -8,6 +8,8 @@ import { getKetoDietById, mapKetoDietToAppDiet } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import SimilarDiets from "./similar-diets";
 
 interface DietDetailClientProps {
   dietId: string;
@@ -17,6 +19,7 @@ export default function DietDetailClient({ dietId }: DietDetailClientProps) {
   const [diet, setDiet] = useState<Diet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
 
   useEffect(() => {
     async function loadDiet() {
@@ -37,7 +40,6 @@ export default function DietDetailClient({ dietId }: DietDetailClientProps) {
     
     loadDiet();
   }, [dietId]);
-
   if (error) {
     return (
       <div className="space-y-6 px-3 sm:px-10 md:px-16">
@@ -58,7 +60,6 @@ export default function DietDetailClient({ dietId }: DietDetailClientProps) {
   if (!diet && !loading) {
     notFound();
   }
-
   return (
     <div className="space-y-6 px-3 sm:px-10 md:px-16">
       <Link href="/diets" passHref>
@@ -67,7 +68,15 @@ export default function DietDetailClient({ dietId }: DietDetailClientProps) {
         </Button>
       </Link>
       
-      {diet ? <DietDetail diet={diet} /> : null}
+      {diet ? (
+        <>
+          <DietDetail diet={diet} />
+          <SimilarDiets 
+            dietId={dietId} 
+            userId={session?.user?.email || 'default_user'} 
+          />
+        </>
+      ) : null}
     </div>
   );
 }

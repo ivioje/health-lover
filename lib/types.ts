@@ -193,35 +193,37 @@ export interface UserPreferences {
   dietary_restrictions: string[];
   health_goals: string[];
   activity_level: string;
-  preferred_cuisines?: string[];
-  disliked_ingredients?: string[];
+  preferred_cuisines: string[];
+  disliked_ingredients: string[];
 }
 
 export interface RecommendationRequest {
   user_id: string;
-  preferences: UserPreferences;
+  preferences?: UserPreferences;
   num_recommendations?: number;
+  content_weight?: number;
 }
 
 export interface PersonalizedRequest extends RecommendationRequest {
-  liked_recipes: number[];
+  preferences: UserPreferences;
+  liked_recipes?: number[];
 }
 
 export interface NutritionalInfo {
-  calories?: number;
-  protein_in_grams?: number;
-  carbohydrates_in_grams?: number;
-  fat_in_grams?: number;
+  calories: number | null;
+  protein_in_grams: number | null;
+  carbohydrates_in_grams: number | null;
+  fat_in_grams: number | null;
 }
 
 export interface RecipeRecommendation {
   id: number;
   recipe: string;
-  category?: string;
-  difficulty?: string;
-  prep_time_in_minutes?: number;
-  cook_time_in_minutes?: number;
-  serving?: number;
+  category?: string | null;
+  difficulty?: string | null;
+  prep_time_in_minutes?: number | null;
+  cook_time_in_minutes?: number | null;
+  serving?: number | null;
   nutritional_info: NutritionalInfo;
   confidence_score: number;
   reason: string;
@@ -232,4 +234,40 @@ export interface RecommendationResponse {
   total_count: number;
   algorithm_used: string;
   user_id: string;
+}
+
+// Additional FastAPI request types
+export interface ContentBasedRequest {
+  user_id: string;
+  preferences: UserPreferences;
+  num_recommendations?: number;
+}
+
+export interface CollaborativeRequest {
+  user_id: string;
+  num_recommendations?: number;
+}
+
+export interface HybridRequest {
+  user_id: string;
+  preferences: UserPreferences;
+  num_recommendations?: number;
+  content_weight?: number;
+}
+
+// User interaction tracking types
+export interface UserViewRequest {
+  user_id: string;
+  diet_id: string;
+}
+
+export interface UserLikeRequest {
+  user_id: string;
+  diet_id: string;
+}
+
+export interface UserAddToFolderRequest {
+  user_id: string;
+  diet_id: string;
+  folder_name: string;
 }

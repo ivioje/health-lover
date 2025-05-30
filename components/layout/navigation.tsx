@@ -49,7 +49,7 @@ export function Navigation() {
           <NavigationMenuList>
             {routes
               .filter(route => {
-                if ((route.name === "Dashboard" || route.name === "Preferences") && !session) {
+                if ((route.name === "Dashboard" || route.name === "Preferences" || route.name === "For You") && !session) {
                   return false;
                 }
                 return true;
@@ -119,7 +119,7 @@ export function Navigation() {
               <div className="flex flex-col space-y-4 mt-8">
                 {routes
                   .filter(route => {
-                    if ((route.name === "Dashboard" || route.name === "Preferences") && !session) {
+                    if ((route.name === "Dashboard" || route.name === "Preferences" || route.name === "For You") && !session) {
                       return false;
                     }
                     return true;

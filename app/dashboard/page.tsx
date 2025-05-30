@@ -33,35 +33,6 @@ export default function DashboardPage() {
     fetchUserData();
   }, []);
 
-  const getRecommendedDiets = () => {
-    if (!user) return [];
-    const dietaryRestrictions = user.preferences?.dietaryRestrictions || [];
-    const healthGoals = user.preferences?.healthGoals || [];
-    
-    let recommendedIds: string[] = [];
-    
-    // to be done with an ML model
-    if (dietaryRestrictions.includes('gluten-free')) {
-      recommendedIds.push('4', '5'); // Gluten-Free and Paleo diets
-    }
-    
-    if (healthGoals.includes('weight-loss')) {
-      recommendedIds.push('3', '6'); // Keto and Intermittent Fasting
-    }
-    
-    if (healthGoals.includes('increase-energy')) {
-      recommendedIds.push('1', '7'); // Mediterranean and Nordic diets
-    }
-    
-    // Default recommendations if we couldn't find any based on preferences
-    if (recommendedIds.length === 0) {
-      recommendedIds = ['1', '2', '8'];
-    }
-    
-    // Return unique IDs
-    return Array.from(new Set(recommendedIds));
-  };
-
   if (isLoading) {
     return (
       <div className="container py-8 md:py-12">
@@ -96,8 +67,6 @@ export default function DashboardPage() {
     return null;
   }
 
-  const recommendedDietIds = getRecommendedDiets();
-
   return (
     <div className="container py-8 md:py-12 px-3 sm:px-10 md:px-16">
       <div className="mb-8">
@@ -129,7 +98,7 @@ export default function DashboardPage() {
             </p>
           </div>
         )}
-        <RecommendedDiets recommendedIds={recommendedDietIds} />
+        <RecommendedDiets savedDiets={user.savedDiets || []} />
       </div>
 
       <p>Categories below</p>

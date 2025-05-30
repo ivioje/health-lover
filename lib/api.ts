@@ -1,9 +1,22 @@
 import axios from 'axios';
-import { KetoDiet, PersonalizedRequest, RecipeRecommendation, RecommendationRequest, RecommendationResponse, SearchParams } from './types';
+import { 
+  Diet,
+  KetoDiet, 
+  SearchParams, 
+  UserPreferences, 
+  RecommendationRequest, 
+  RecommendationResponse, 
+  RecipeRecommendation, 
+  PersonalizedRequest, 
+  ContentBasedRequest, 
+  CollaborativeRequest, 
+  HybridRequest, 
+  UserViewRequest, 
+  UserLikeRequest, 
+  UserAddToFolderRequest 
+} from './types';
 
 const RAPID_API_KEY = process.env.NEXT_PUBLIC_RAPIDAPI_KEY;
-
-
 const ketoApi = axios.create({
   baseURL: `https://keto-diet.p.rapidapi.com`,
   headers: {
@@ -12,16 +25,47 @@ const ketoApi = axios.create({
   },
 });
 
-// FastAPI backend configuration
-const FASTAPI_BASE_URL = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
-
-// FastAPI client
-const fastApiClient = axios.create({
-  baseURL: FASTAPI_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
+// Add request interceptor for debugging
+axios.interceptors.request.use(
+  (config) => {
+    if (config.url?.startsWith('/api/recommendations') || config.url?.startsWith('/api/user')) {
+      console.log('API Request:', {
+        url: config.url,
+        method: config.method,
+        data: config.data
+      });
+    }
+    return config;
   },
-});
+  (error) => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for debugging
+axios.interceptors.response.use(
+  (response) => {
+    if (response.config.url?.startsWith('/api/recommendations') || response.config.url?.startsWith('/api/user')) {
+      console.log('API Response:', {
+        status: response.status,
+        url: response.config.url,
+        data: response.data
+      });
+    }
+    return response;
+  },
+  (error) => {
+    console.error('API Response Error:', {
+      message: error.message,
+      code: error.code,
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+    return Promise.reject(error);
+  }
+);
 
 export async function searchDiets(params: SearchParams) {
   try {
@@ -140,18 +184,22 @@ export function extractDirections(diet: KetoDiet): string[] {
   return directions;
 }
 
-export function mapKetoDietToAppDiet(ketoDiet: KetoDiet) {
+export function mapKetoDietToAppDiet(ketoDiet: KetoDiet): Diet {
   const tags = generateDietTags(ketoDiet);
   const ingredients = extractIngredients(ketoDiet);
   const directions = extractDirections(ketoDiet);
   
   const totalTime = (ketoDiet.prep_time_in_minutes || 0) + (ketoDiet.cook_time_in_minutes || 0);
   
+  // Ensure imageUrl is always a string
+  console.log("Keto diet image:", ketoDiet.image, "Category thumbnail:", ketoDiet.category?.thumbnail);
+  const imageUrl = ketoDiet.image || ketoDiet.category?.thumbnail || '';
+  
   return {
     id: ketoDiet.id.toString(),
     name: ketoDiet.recipe,
     description: `${ketoDiet.difficulty || 'Easy'} keto recipe with ${ketoDiet.protein_in_grams || 0}g protein and only ${ketoDiet.carbohydrates_in_grams || 0}g carbs. Ready in ${totalTime} minutes.`,
-    imageUrl: ketoDiet.image || ketoDiet.category?.thumbnail || "https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=2053&auto=format&fit=crop",
+    imageUrl,
     tags,
     nutritionalFacts: {
       calories: ketoDiet.calories || 0,
@@ -182,10 +230,13 @@ export function mapKetoDietToAppDiet(ketoDiet: KetoDiet) {
   };
 }
 
-// FastAPI recommendation functions
-export async function getPersonalizedRecommendations(request: PersonalizedRequest): Promise<RecommendationResponse> {
+// --- FastAPI Recommendation Integration ---
+export async function 
+getPersonalizedRecommendations(request: PersonalizedRequest): 
+Promise<RecommendationResponse> {
   try {
-    const response = await fastApiClient.post('/recommendations/personalized', request);
+    // Use Next.js API route as proxy to avoid CORS issues
+    const response = await axios.post('/api/recommendations/personalized/recommendations', request);
     return response.data;
   } catch (error) {
     console.error('Error getting personalized recommendations:', error);
@@ -193,9 +244,12 @@ export async function getPersonalizedRecommendations(request: PersonalizedReques
   }
 }
 
-export async function getContentBasedRecommendations(request: RecommendationRequest): Promise<RecommendationResponse> {
+export async function 
+getContentBasedRecommendations(request: ContentBasedRequest): 
+Promise<RecommendationResponse> {
   try {
-    const response = await fastApiClient.post('/recommendations/content-based', request);
+    // Use Next.js API route as proxy to avoid CORS issues
+    const response = await axios.post('/api/recommendations/content-based', request);
     return response.data;
   } catch (error) {
     console.error('Error getting content-based recommendations:', error);
@@ -203,9 +257,25 @@ export async function getContentBasedRecommendations(request: RecommendationRequ
   }
 }
 
-export async function getHybridRecommendations(request: RecommendationRequest & { content_weight?: number }): Promise<RecommendationResponse> {
+export async function 
+getCollaborativeRecommendations(request: CollaborativeRequest): 
+Promise<RecommendationResponse> {
   try {
-    const response = await fastApiClient.post('/recommendations/hybrid', request);
+    // Use Next.js API route as proxy to avoid CORS issues
+    const response = await axios.post('/api/recommendations/collaborative', request);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting collaborative recommendations:', error);
+    throw error;
+  }
+}
+
+export async function 
+getHybridRecommendations(request: HybridRequest): 
+Promise<RecommendationResponse> {
+  try {
+    // Use Next.js API route as proxy to avoid CORS issues
+    const response = await axios.post('/api/recommendations/hybrid', request);
     return response.data;
   } catch (error) {
     console.error('Error getting hybrid recommendations:', error);
@@ -213,9 +283,12 @@ export async function getHybridRecommendations(request: RecommendationRequest & 
   }
 }
 
-export async function getTrendingRecipes(num_recommendations: number = 10): Promise<{ trending_recipes: RecipeRecommendation[], total_count: number }> {
+export async function 
+getTrendingRecipes(num_recommendations: number = 10): 
+Promise<{ trending_recipes: RecipeRecommendation[], total_count: number }> {
   try {
-    const response = await fastApiClient.get(`/recommendations/trending?num_recommendations=${num_recommendations}`);
+    // Use Next.js API route as proxy to avoid CORS issues
+    const response = await axios.get(`/api/recommendations/trending?num_recommendations=${num_recommendations}`);
     return response.data;
   } catch (error) {
     console.error('Error getting trending recipes:', error);
@@ -223,9 +296,12 @@ export async function getTrendingRecipes(num_recommendations: number = 10): Prom
   }
 }
 
-export async function getSimilarRecipes(recipe_id: number, num_recommendations: number = 5): Promise<{ recipe_id: number, similar_recipes: RecipeRecommendation[], total_count: number }> {
+export async function 
+getSimilarRecipes(recipe_id: number, num_recommendations: number = 5): 
+Promise<{ recipe_id: number, similar_recipes: RecipeRecommendation[], total_count: number }> {
   try {
-    const response = await fastApiClient.get(`/recommendations/similar/${recipe_id}?num_recommendations=${num_recommendations}`);
+    // Use Next.js API route as proxy to avoid CORS issues
+    const response = await axios.get(`/api/recommendations/similar-recipes/${recipe_id}?num_recommendations=${num_recommendations}`);
     return response.data;
   } catch (error) {
     console.error('Error getting similar recipes:', error);
@@ -235,7 +311,8 @@ export async function getSimilarRecipes(recipe_id: number, num_recommendations: 
 
 export async function getRecommendationCategories(): Promise<{ categories: string[], total_count: number }> {
   try {
-    const response = await fastApiClient.get('/recommendations/categories');
+    // Use Next.js API route as proxy to avoid CORS issues
+    const response = await axios.get('/api/recommendations/categories');
     return response.data;
   } catch (error) {
     console.error('Error getting recommendation categories:', error);
@@ -245,7 +322,8 @@ export async function getRecommendationCategories(): Promise<{ categories: strin
 
 export async function getRecommendationSystemStats(): Promise<any> {
   try {
-    const response = await fastApiClient.get('/recommendations/stats');
+    // Use Next.js API route as proxy to avoid CORS issues
+    const response = await axios.get('/api/recommendations/stats');
     return response.data;
   } catch (error) {
     console.error('Error getting recommendation system stats:', error);
@@ -255,7 +333,8 @@ export async function getRecommendationSystemStats(): Promise<any> {
 
 export async function checkRecommendationHealth(): Promise<any> {
   try {
-    const response = await fastApiClient.get('/recommendations/health');
+    // Use Next.js API route as proxy to avoid CORS issues
+    const response = await axios.get('/api/recommendations/health');
     return response.data;
   } catch (error) {
     console.error('Error checking recommendation service health:', error);
@@ -263,48 +342,86 @@ export async function checkRecommendationHealth(): Promise<any> {
   }
 }
 
-// map FastAPI recommendations to app diet format
-export function mapFastAPIRecommendationToAppDiet(recommendation: RecipeRecommendation) {
-  const totalTime = (recommendation.prep_time_in_minutes || 0) + (recommendation.cook_time_in_minutes || 0);
-  
+// User interaction tracking functions
+export async function trackUserView(request: UserViewRequest): Promise<void> {
+  try {
+    // Use Next.js API route as proxy to avoid CORS issues
+    await axios.post('/api/user/view', request);
+  } catch (error) {
+    console.error('Error tracking user view:', error);
+    throw error;
+  }
+}
+
+export async function trackUserLike(request: UserLikeRequest): Promise<void> {
+  try {
+    // Use Next.js API route as proxy to avoid CORS issues
+    await axios.post('/api/user/like', request);
+  } catch (error) {
+    console.error('Error tracking user like:', error);
+    throw error;
+  }
+}
+
+export async function trackUserAddToFolder(request: UserAddToFolderRequest): Promise<void> {
+  try {
+    // Use Next.js API route as proxy to avoid CORS issues
+    await axios.post('/api/user/add-to-folder', request);
+  } catch (error) {
+    console.error('Error tracking add to folder:', error);
+    throw error;
+  }
+}
+
+// Helper to map FastAPI recommendation to app diet format, using keto diet image if available
+export function mapFastAPIRecommendationToAppDiet(
+  rec: RecipeRecommendation,
+  ketoDiets?: KetoDiet[]
+): Diet {
+  const tags: string[] = ['ai-recommended'];
+  if (rec.category) {
+    tags.push(rec.category.toLowerCase().replace(/\s+/g, '-'));
+  }
+  if (rec.difficulty) {
+    tags.push(rec.difficulty.toLowerCase());
+  }
+  if (rec.nutritional_info.protein_in_grams && rec.nutritional_info.protein_in_grams > 20) {
+    tags.push('high-protein');
+  }
+  if (rec.nutritional_info.calories && rec.nutritional_info.calories < 300) {
+    tags.push('low-calorie');
+  }
+
+  // Try to find a matching keto diet by id for image
+  let imageUrl = ''
+  if (ketoDiets) {
+    const matched = ketoDiets.find(diet => diet.id.toString() === rec.id.toString());
+    if (matched?.image) {
+      imageUrl = matched.image;
+    } else if (matched?.category?.thumbnail) {
+      imageUrl = matched.category.thumbnail;
+    }
+  }
+  console.log("Mapped recommendation image:", imageUrl);
+
   return {
-    id: recommendation.id.toString(),
-    name: recommendation.recipe,
-    description: `${recommendation.difficulty || 'Easy'} recipe with ${recommendation.nutritional_info.protein_in_grams || 0}g protein and only ${recommendation.nutritional_info.carbohydrates_in_grams || 0}g carbs. Ready in ${totalTime} minutes. ${recommendation.reason}`,
-    imageUrl: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=2053&auto=format&fit=crop",
-    tags: [
-      recommendation.category?.toLowerCase().replace(/\s+/g, '-') || 'recipe',
-      recommendation.difficulty?.toLowerCase() || 'easy',
-      recommendation.nutritional_info.calories && recommendation.nutritional_info.calories < 300 ? 'low-calorie' : 'moderate-calorie',
-      recommendation.nutritional_info.protein_in_grams && recommendation.nutritional_info.protein_in_grams > 20 ? 'high-protein' : 'moderate-protein',
-      recommendation.nutritional_info.carbohydrates_in_grams && recommendation.nutritional_info.carbohydrates_in_grams < 20 ? 'low-carb' : 'moderate-carb'
-    ].filter(Boolean),
+    id: rec.id.toString(),
+    name: rec.recipe,
+    description: rec.reason,
+    imageUrl, // always a string, never undefined
+    tags,
     nutritionalFacts: {
-      calories: recommendation.nutritional_info.calories || 0,
-      protein: recommendation.nutritional_info.protein_in_grams || 0,
-      carbs: recommendation.nutritional_info.carbohydrates_in_grams || 0,
-      fat: recommendation.nutritional_info.fat_in_grams || 0
+      calories: rec.nutritional_info.calories || 0,
+      protein: rec.nutritional_info.protein_in_grams || 0,
+      carbs: rec.nutritional_info.carbohydrates_in_grams || 0,
+      fat: rec.nutritional_info.fat_in_grams || 0,
     },
-    benefits: [
-      "AI-recommended recipe",
-      `${recommendation.nutritional_info.calories || 0} calories per serving`,
-      `Contains ${recommendation.nutritional_info.protein_in_grams || 0}g of protein`,
-      `Only ${recommendation.nutritional_info.carbohydrates_in_grams || 0}g of carbohydrates`,
-      recommendation.reason
-    ],
+    benefits: [rec.reason],
     sampleMeals: [
       {
-        name: recommendation.recipe,
-        description: recommendation.reason
+        name: rec.recipe,
+        description: `AI-recommended ${rec.category || 'recipe'} with ${rec.nutritional_info.calories || 0} calories`
       }
     ],
-    recipe: {
-      ingredients: [],
-      directions: [],
-      servings: recommendation.serving || 1,
-      prepTime: recommendation.prep_time_in_minutes || 0,
-      cookTime: recommendation.cook_time_in_minutes || 0,
-      difficulty: recommendation.difficulty || 'Easy'
-    }
   };
 }

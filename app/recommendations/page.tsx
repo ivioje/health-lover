@@ -7,7 +7,7 @@ import { ShieldCheck, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { searchDiets, searchKetoDiets, mapKetoDietToAppDiet, getPersonalizedRecommendations, getHybridRecommendations, mapFastAPIRecommendationToAppDiet, UserPreferences } from "@/lib/api";
+import { getUserPersonalizedRecommendations } from "@/lib/recommendation-service";
 import { Diet } from "@/lib/types";
 
 export default function RecommendationsPage() {
@@ -15,107 +15,13 @@ export default function RecommendationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {    const fetchRecommendations = async () => {
+  useEffect(() => {
+    const fetchRecommendations = async () => {
       try {
         setLoading(true);
-        
-        const storedPreferences = localStorage.getItem('userPreferences');
-        const userPreferences = storedPreferences ? JSON.parse(storedPreferences) : {};
-        const dietaryRestrictions = userPreferences.dietaryRestrictions || [];
-        const healthGoals = userPreferences.healthGoals || [];
-        const activityLevel = userPreferences.activityLevel || 'moderate';
-        
-        // Try FastAPI backend first
-        try {
-          const userId = localStorage.getItem('userId') || 'default_user';
-          
-          const fastApiPreferences: UserPreferences = {
-            dietary_restrictions: dietaryRestrictions,
-            health_goals: healthGoals,
-            activity_level: activityLevel,
-            preferred_cuisines: userPreferences.preferredCuisines || [],
-            disliked_ingredients: userPreferences.dislikedIngredients || []
-          };
-
-          const request = {
-            user_id: userId,
-            preferences: fastApiPreferences,
-            num_recommendations: 8
-          };
-
-          // Try personalized recommendations if user has liked recipes
-          const likedRecipes = JSON.parse(localStorage.getItem('likedRecipes') || '[]');
-          let fastApiResponse;
-          
-          if (likedRecipes.length > 0) {
-            fastApiResponse = await getPersonalizedRecommendations({
-              ...request,
-              liked_recipes: likedRecipes
-            });
-          } else {
-            fastApiResponse = await getHybridRecommendations(request);
-          }
-
-          if (fastApiResponse && fastApiResponse.recommendations.length > 0) {
-            const mappedDiets = fastApiResponse.recommendations.map(rec => 
-              mapFastAPIRecommendationToAppDiet(rec)
-            );
-            setRecommendedDiets(mappedDiets);
-            console.log(`Found ${mappedDiets.length} AI-recommended diets`);
-            return;
-          }
-        } catch (fastApiError) {
-          console.log('FastAPI recommendations failed, falling back to existing logic:', fastApiError);
-        }
-        
-        // Fallback to existing recommendation logic
-        const ketoDiets = await searchKetoDiets({ number: 20 });
-        let filteredDiets = ketoDiets;
-        
-        // Apply dietary restrictions filtering
-        if (dietaryRestrictions.includes('gluten-free')) {
-          filteredDiets = filteredDiets.filter((diet: any) => 
-            !diet.ingredient_1?.includes('gluten') && 
-            !diet.ingredient_2?.includes('gluten') &&
-            !diet.ingredient_3?.includes('gluten')
-          );
-        }
-        
-        // Apply health goals filtering
-        if (healthGoals.includes('weight-loss')) {
-          filteredDiets = filteredDiets.filter((diet: any) => 
-            diet.calories < 500
-          );
-        }
-        
-        if (healthGoals.includes('increase-energy')) {
-          filteredDiets = filteredDiets.filter((diet: any) => 
-            diet.protein_in_grams > 15
-          );
-        }
-        
-        // Sort by relevance (for now, just sort by protein content as an example)
-        filteredDiets.sort((a: any, b: any) => 
-          (b.protein_in_grams || 0) - (a.protein_in_grams || 0)
-        );
-        
-        // Take only the first 8 diets
-        const topDiets = filteredDiets.slice(0, 8);
-        
-        // Map to application diet format
-        const mappedDiets = topDiets.map((diet: any) => mapKetoDietToAppDiet(diet));
-        
-        console.log(`Found ${mappedDiets.length} recommended diets`);
-        
-        // Set the diets in state
-        if (mappedDiets.length > 0) {
-          setRecommendedDiets(mappedDiets);
-        } else {
-          // Fallback if no filtered results found
-          const defaultDiets = ketoDiets.slice(0, 8).map((diet: any) => mapKetoDietToAppDiet(diet));
-          setRecommendedDiets(defaultDiets);
-          console.log('Using default recommendations as no filtered results were found');
-        }
+        setError(null);
+        const diets = await getUserPersonalizedRecommendations(8);
+        setRecommendedDiets(diets);
       } catch (err) {
         console.error('Error fetching recommendations:', err);
         setError("An error occurred while fetching your personalized recommendations.");
@@ -123,7 +29,6 @@ export default function RecommendationsPage() {
         setLoading(false);
       }
     };
-
     fetchRecommendations();
   }, []);
 

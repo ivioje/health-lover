@@ -3,27 +3,49 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Diet } from "@/lib/types";
-import { diets as allDiets } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getSimilarDiets } from "@/lib/recommendation-api";
+import { getUserPersonalizedRecommendations } from "@/lib/recommendation-service";
 
 interface RecommendedDietsProps {
-  recommendedIds: string[];
+  recommendedIds?: string[];
+  savedDiets?: string[];
 }
 
-// to come from ML model
-export function RecommendedDiets({ recommendedIds }: RecommendedDietsProps) {
+// Uses AI recommendation engine to suggest diets
+export function RecommendedDiets({ recommendedIds, savedDiets = [] }: RecommendedDietsProps) {
   const [recommendedDiets, setRecommendedDiets] = useState<Diet[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Find the diets that match the recommended IDs
-    const foundDiets = allDiets.filter(diet => recommendedIds.includes(diet.id));
-    setRecommendedDiets(foundDiets);
-  }, [recommendedIds]);
+    const fetchRecommendations = async () => {
+      setLoading(true);
+      try {
+        // Get AI-powered personalized recommendations based on user profile
+        const personalizedDiets = await getUserPersonalizedRecommendations(5);
+        
+        if (personalizedDiets && personalizedDiets.length > 0) {
+          setRecommendedDiets(personalizedDiets);
+        } 
+        // If no personalized recommendations or if we have saved diets, try to get recommendations based on saved diets
+        else if (savedDiets && savedDiets.length > 0) {
+          // Get similar diets based on the first saved diet
+          const similarDiets = await getSimilarDiets(savedDiets[0], 5);
+          setRecommendedDiets(similarDiets);
+        }
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchRecommendations();
+  }, [savedDiets]);
   return (
     <Card className="bg-card/80 backdrop-blur-sm border border-border/50">
       <CardHeader>
@@ -42,9 +64,18 @@ export function RecommendedDiets({ recommendedIds }: RecommendedDietsProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="-mx-4 px-4">
+        {loading ? (
           <div className="flex space-x-4">
-            {recommendedDiets.map((diet) => (
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="min-w-[280px] max-w-[300px]">
+                <div className="rounded-lg overflow-hidden border border-border/50 h-[180px] bg-muted animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <ScrollArea className="-mx-4 px-4">
+            <div className="flex space-x-4">
+              {recommendedDiets.map((diet) => (
               <Link 
                 key={diet.id} 
                 href={`/diets/${diet.id}`} 
@@ -74,11 +105,11 @@ export function RecommendedDiets({ recommendedIds }: RecommendedDietsProps) {
                     </div>
                   </div>
                 </div>
-              </Link>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+              </Link>            ))}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          )}
       </CardContent>
     </Card>
   );
