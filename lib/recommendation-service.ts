@@ -33,7 +33,6 @@ export async function getUserPersonalizedRecommendations(count: number = 8): Pro
     if (cachedResponse && cachedResponse.recommendations) {
       console.log('Using cached personalized recommendations');
       console.log('Cached recommendations count:', cachedResponse.recommendations.length);
-      // Cast diets to KetoDiet[] by filtering those with numeric id
       const ketoDiets = (diets as any[]).filter(diet => typeof diet.id === 'number') as KetoDiet[];
       return cachedResponse.recommendations.map(rec => mapFastAPIRecommendationToAppDiet(rec, ketoDiets));
     }

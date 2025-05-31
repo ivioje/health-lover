@@ -28,14 +28,12 @@ const apiClient = axios.create({
  */
 export async function getSimilarDiets(dietId: string, num_recommendations: number = 4): Promise<Diet[]> {
   try {
-    // Check if we have cached results
     const cachedResult = getCachedSimilarDiets(dietId, num_recommendations);
     if (cachedResult) {
       console.log('Using cached similar diets');
       return cachedResult;
     }
     
-    // Use NextJS API proxy to fetch similar diets (avoids CORS issues)
     try {
       console.log(`Fetching similar diets for ${dietId} through Next.js API proxy`);
       const response = await apiClient.get(`/similar/${dietId}?num_recommendations=${num_recommendations}`);
@@ -53,7 +51,6 @@ export async function getSimilarDiets(dietId: string, num_recommendations: numbe
       console.log('Falling back to local data strategy');
     }
     
-    // Fallback to existing API and filter by matching tags if API calls fail
     const allDiets = await searchKetoDiets();
     const currentDiet = allDiets.find((diet: any) => diet.id.toString() === dietId);
     
@@ -103,7 +100,6 @@ export async function getPopularDiets(num_recommendations: number = 8): Promise<
       return cachedResult;
     }
     
-    // Use NextJS API proxy to fetch popular diets (avoids CORS issues)
     try {
       console.log(`Fetching popular diets through Next.js API proxy`);
       const response = await apiClient.get(`/popular?num_recommendations=${num_recommendations}`);
@@ -121,7 +117,6 @@ export async function getPopularDiets(num_recommendations: number = 8): Promise<
       console.log('Falling back to local data strategy');
     }
     
-    // Fallback to existing API and sort by calories if API calls fail
     const allDiets = await searchKetoDiets();
     const popularDiets = allDiets
       .sort((a: any, b: any) => (b.calories || 0) - (a.calories || 0))

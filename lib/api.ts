@@ -235,7 +235,6 @@ export async function
 getPersonalizedRecommendations(request: PersonalizedRequest): 
 Promise<RecommendationResponse> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     const response = await axios.post('/api/recommendations/personalized/recommendations', request);
     return response.data;
   } catch (error) {
@@ -248,7 +247,6 @@ export async function
 getContentBasedRecommendations(request: ContentBasedRequest): 
 Promise<RecommendationResponse> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     const response = await axios.post('/api/recommendations/content-based', request);
     return response.data;
   } catch (error) {
@@ -261,7 +259,6 @@ export async function
 getCollaborativeRecommendations(request: CollaborativeRequest): 
 Promise<RecommendationResponse> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     const response = await axios.post('/api/recommendations/collaborative', request);
     return response.data;
   } catch (error) {
@@ -274,7 +271,6 @@ export async function
 getHybridRecommendations(request: HybridRequest): 
 Promise<RecommendationResponse> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     const response = await axios.post('/api/recommendations/hybrid', request);
     return response.data;
   } catch (error) {
@@ -287,7 +283,6 @@ export async function
 getTrendingRecipes(num_recommendations: number = 10): 
 Promise<{ trending_recipes: RecipeRecommendation[], total_count: number }> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     const response = await axios.get(`/api/recommendations/trending?num_recommendations=${num_recommendations}`);
     return response.data;
   } catch (error) {
@@ -300,7 +295,6 @@ export async function
 getSimilarRecipes(recipe_id: number, num_recommendations: number = 5): 
 Promise<{ recipe_id: number, similar_recipes: RecipeRecommendation[], total_count: number }> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     const response = await axios.get(`/api/recommendations/similar-recipes/${recipe_id}?num_recommendations=${num_recommendations}`);
     return response.data;
   } catch (error) {
@@ -311,7 +305,6 @@ Promise<{ recipe_id: number, similar_recipes: RecipeRecommendation[], total_coun
 
 export async function getRecommendationCategories(): Promise<{ categories: string[], total_count: number }> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     const response = await axios.get('/api/recommendations/categories');
     return response.data;
   } catch (error) {
@@ -322,7 +315,6 @@ export async function getRecommendationCategories(): Promise<{ categories: strin
 
 export async function getRecommendationSystemStats(): Promise<any> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     const response = await axios.get('/api/recommendations/stats');
     return response.data;
   } catch (error) {
@@ -333,7 +325,6 @@ export async function getRecommendationSystemStats(): Promise<any> {
 
 export async function checkRecommendationHealth(): Promise<any> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     const response = await axios.get('/api/recommendations/health');
     return response.data;
   } catch (error) {
@@ -345,7 +336,6 @@ export async function checkRecommendationHealth(): Promise<any> {
 // User interaction tracking functions
 export async function trackUserView(request: UserViewRequest): Promise<void> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     await axios.post('/api/user/view', request);
   } catch (error) {
     console.error('Error tracking user view:', error);
@@ -355,7 +345,6 @@ export async function trackUserView(request: UserViewRequest): Promise<void> {
 
 export async function trackUserLike(request: UserLikeRequest): Promise<void> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     await axios.post('/api/user/like', request);
   } catch (error) {
     console.error('Error tracking user like:', error);
@@ -365,7 +354,6 @@ export async function trackUserLike(request: UserLikeRequest): Promise<void> {
 
 export async function trackUserAddToFolder(request: UserAddToFolderRequest): Promise<void> {
   try {
-    // Use Next.js API route as proxy to avoid CORS issues
     await axios.post('/api/user/add-to-folder', request);
   } catch (error) {
     console.error('Error tracking add to folder:', error);

@@ -14,7 +14,6 @@ export async function GET(request: Request) {
     }
     await connectToDatabase();
 
-    // Find the user
     const user = await User.findOne({ email: session.user.email });
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
