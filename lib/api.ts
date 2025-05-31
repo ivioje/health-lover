@@ -191,7 +191,6 @@ export function mapKetoDietToAppDiet(ketoDiet: KetoDiet): Diet {
   
   const totalTime = (ketoDiet.prep_time_in_minutes || 0) + (ketoDiet.cook_time_in_minutes || 0);
   
-  // Ensure imageUrl is always a string
   console.log("Keto diet image:", ketoDiet.image, "Category thumbnail:", ketoDiet.category?.thumbnail);
   const imageUrl = ketoDiet.image || ketoDiet.category?.thumbnail || '';
   
@@ -361,7 +360,7 @@ export async function trackUserAddToFolder(request: UserAddToFolderRequest): Pro
   }
 }
 
-// Helper to map FastAPI recommendation to app diet format, using keto diet image if available
+// map FastAPI recommendation to app diet format, using keto diet image if available
 export function mapFastAPIRecommendationToAppDiet(
   rec: RecipeRecommendation,
   ketoDiets?: KetoDiet[]
@@ -380,7 +379,6 @@ export function mapFastAPIRecommendationToAppDiet(
     tags.push('low-calorie');
   }
 
-  // Try to find a matching keto diet by id for image
   let imageUrl = ''
   if (ketoDiets) {
     const matched = ketoDiets.find(diet => diet.id.toString() === rec.id.toString());
@@ -390,13 +388,12 @@ export function mapFastAPIRecommendationToAppDiet(
       imageUrl = matched.category.thumbnail;
     }
   }
-  console.log("Mapped recommendation image:", imageUrl);
 
   return {
     id: rec.id.toString(),
     name: rec.recipe,
     description: rec.reason,
-    imageUrl, // always a string, never undefined
+    imageUrl,
     tags,
     nutritionalFacts: {
       calories: rec.nutritional_info.calories || 0,

@@ -2,8 +2,9 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import { RecipeRecommendation } from '@/lib/types';
-import { mapFastAPIRecommendationToAppDiet } from '@/lib/recommendation-api';
+import { mapFastAPIRecommendationToAppDiet } from '@/lib/api';
 import { logApiRequest, logApiSuccess, handleApiError } from '@/lib/utils/api-diagnostics';
+import { getKetoDietById } from '@/lib/api';
 
 // Use environment variable for API URL
 const FASTAPI_BASE_URL = `${process.env.NEXT_PUBLIC_FASTAPI_URL}/api/v1` || '';
@@ -35,8 +36,14 @@ export async function GET(
       
       if (response.data && response.data.similar_recipes) {
         logApiSuccess('FastAPI', `/recommendations/similar/${dietId}`, { count: response.data.similar_recipes.length });
-        const mappedResults = response.data.similar_recipes.map((rec: RecipeRecommendation) => 
-          mapFastAPIRecommendationToAppDiet(rec)
+        const mappedResults = await Promise.all(
+          response.data.similar_recipes.map(async (rec: RecipeRecommendation) => {
+            let ketoDiet = null;
+            try {
+              ketoDiet = await getKetoDietById(Number(rec.id));
+            } catch (e) {}
+            return mapFastAPIRecommendationToAppDiet(rec, ketoDiet ? [ketoDiet] : undefined);
+          })
         );
         return NextResponse.json({ similar_diets: mappedResults });
       } else {
@@ -63,8 +70,14 @@ export async function GET(
         
         if (response.data && Array.isArray(response.data)) {
           logApiSuccess('FastAPI', `/recommend/similar`, { count: response.data.length });
-          const mappedResults = response.data.slice(0, Number(numRecommendations)).map((rec: RecipeRecommendation) => 
-            mapFastAPIRecommendationToAppDiet(rec)
+          const mappedResults = await Promise.all(
+            response.data.slice(0, Number(numRecommendations)).map(async (rec: RecipeRecommendation) => {
+              let ketoDiet = null;
+              try {
+                ketoDiet = await getKetoDietById(Number(rec.id));
+              } catch (e) {}
+              return mapFastAPIRecommendationToAppDiet(rec, ketoDiet ? [ketoDiet] : undefined);
+            })
           );
           return NextResponse.json({ similar_diets: mappedResults });
         } else {

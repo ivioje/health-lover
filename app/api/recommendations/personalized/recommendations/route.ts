@@ -1,16 +1,15 @@
-// Proxy route for personalized recommendations API to avoid CORS issues
 import { NextResponse } from 'next/server';
 import axios from 'axios';
-import { PersonalizedRequest } from '@/lib/types';
+import { PersonalizedRequest, RecipeRecommendation } from '@/lib/types';
+import { mapFastAPIRecommendationToAppDiet } from '@/lib/recommendation-api';
+import { getKetoDietById } from '@/lib/api';
 
 const FASTAPI_BASE_URL = `${process.env.NEXT_PUBLIC_FASTAPI_URL}/api/v1` || '';
 
 export async function POST(request: Request) {
   try {
     const body: PersonalizedRequest = await request.json();
-    
-    console.log(`Proxying personalized recommendations request to ${FASTAPI_BASE_URL}/recommendations/personalized`);
-    
+        
     try {
       const response = await axios.post(
         `${FASTAPI_BASE_URL}/recommendations/personalized`,
@@ -23,7 +22,18 @@ export async function POST(request: Request) {
           timeout: 10000
         }
       );
-      
+      if (response.data && response.data.recommendations) {
+        const mappedResults = await Promise.all(
+          response.data.recommendations.map(async (rec: RecipeRecommendation) => {
+            let ketoDiet = null;
+            try {
+              ketoDiet = await getKetoDietById(Number(rec.id));
+            } catch (e) {}
+            return mapFastAPIRecommendationToAppDiet(rec, ketoDiet ? [ketoDiet] : undefined);
+          })
+        );
+        return NextResponse.json({ ...response.data, recommendations: mappedResults });
+      }
       return NextResponse.json(response.data);
     } catch (error) {
       console.error('Failed to get personalized recommendations from FastAPI:', error);

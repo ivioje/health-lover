@@ -6,7 +6,7 @@ import {
   getCachedPersonalizedRecommendations, 
   cachePersonalizedRecommendations 
 } from './cache/recommendation-cache';
-import { diets } from './data';
+import { getKetoDietById } from './api';
 /**
  * Get personalized recommendations for the current user
  * This function integrates user data from MongoDB with the FastAPI recommendation engine
@@ -29,12 +29,21 @@ export async function getUserPersonalizedRecommendations(count: number = 8): Pro
       preferences: apiPreferences,
       liked_recipes: userData.savedDiets?.map(id => Number(id)) || [],
       num_recommendations: count
-    };    const cachedResponse = getCachedPersonalizedRecommendations(request);
+    };
+    const cachedResponse = getCachedPersonalizedRecommendations(request);
     if (cachedResponse && cachedResponse.recommendations) {
       console.log('Using cached personalized recommendations');
       console.log('Cached recommendations count:', cachedResponse.recommendations.length);
-      const ketoDiets = (diets as any[]).filter(diet => typeof diet.id === 'number') as KetoDiet[];
-      return cachedResponse.recommendations.map(rec => mapFastAPIRecommendationToAppDiet(rec, ketoDiets));
+      const mappedDiets = await Promise.all(
+        cachedResponse.recommendations.map(async (rec) => {
+          let ketoDiet = null;
+          try {
+            ketoDiet = await getKetoDietById(Number(rec.id));
+          } catch (e) {}
+          return mapFastAPIRecommendationToAppDiet(rec, ketoDiet ? [ketoDiet] : undefined);
+        })
+      );
+      return mappedDiets;
     }
     
     try {
@@ -45,9 +54,15 @@ export async function getUserPersonalizedRecommendations(count: number = 8): Pro
       if (response && response.recommendations) {
         cachePersonalizedRecommendations(request, response);
         console.log('Cached personalized recommendations response');
-        
-        const ketoDiets = (diets as any[]).filter(diet => typeof diet.id === 'number') as KetoDiet[];
-        const mappedDiets = response.recommendations.map(rec => mapFastAPIRecommendationToAppDiet(rec, ketoDiets));
+        const mappedDiets = await Promise.all(
+          response.recommendations.map(async (rec) => {
+            let ketoDiet = null;
+            try {
+              ketoDiet = await getKetoDietById(Number(rec.id));
+            } catch (e) {}
+            return mapFastAPIRecommendationToAppDiet(rec, ketoDiet ? [ketoDiet] : undefined);
+          })
+        );
         console.log('Successfully mapped recommendations to Diet objects:', mappedDiets);
         return mappedDiets;
       } else {

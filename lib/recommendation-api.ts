@@ -8,8 +8,6 @@ import {
   cachePopularDiets
 } from './cache/recommendation-cache';
 
-export { mapFastAPIRecommendationToAppDiet } from './api';
-
 const API_BASE_URL = '/api/recommendations';
 
 const apiClient = axios.create({
@@ -93,7 +91,6 @@ export async function getSimilarDiets(dietId: string, num_recommendations: numbe
  */
 export async function getPopularDiets(num_recommendations: number = 8): Promise<Diet[]> {
   try {
-    // Check if we have cached results
     const cachedResult = getCachedPopularDiets(num_recommendations);
     if (cachedResult) {
       console.log('Using cached popular diets');

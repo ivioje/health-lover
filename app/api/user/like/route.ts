@@ -1,4 +1,3 @@
-// Proxy route for tracking user likes to avoid CORS issues
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import { UserLikeRequest } from '@/lib/types';
@@ -8,9 +7,7 @@ const FASTAPI_BASE_URL = `${process.env.NEXT_PUBLIC_FASTAPI_URL}/api/v1` || '';
 export async function POST(request: Request) {
   try {
     const body: UserLikeRequest = await request.json();
-    
-    console.log(`Proxying user like tracking request to ${FASTAPI_BASE_URL}/user/like`);
-    
+        
     try {
       const response = await axios.post(
         `${FASTAPI_BASE_URL}/user/like`,
