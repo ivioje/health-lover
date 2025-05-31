@@ -1,4 +1,3 @@
-// Proxy route for collaborative recommendations API to avoid CORS issues
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import { CollaborativeRequest } from '@/lib/types';
@@ -20,7 +19,7 @@ export async function POST(request: Request) {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          timeout: 10000
+          timeout: 20000
         }
       );
       

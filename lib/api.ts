@@ -3,8 +3,6 @@ import {
   Diet,
   KetoDiet, 
   SearchParams, 
-  UserPreferences, 
-  RecommendationRequest, 
   RecommendationResponse, 
   RecipeRecommendation, 
   PersonalizedRequest, 
@@ -101,8 +99,16 @@ export async function searchKetoDiets(params: SearchParams = {}) {
     const response = await ketoApi.get('/', { params });
     console.log("Keto diets response:", response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error searching keto diets:', error);
+
+    // Fallback to local JSON file if RapidAPI returns a 429 error
+    if (error.response?.status === 429) {
+      console.warn('RapidAPI rate limit exceeded. Falling back to local JSON file.');
+      const diets = require('../api-diets.json');
+      return diets;
+    }
+
     throw error;
   }
 }
@@ -111,14 +117,28 @@ export async function getKetoDietById(id: number) {
   try {
     const response = await ketoApi.get('/');
     const diet = response.data.find((diet: KetoDiet) => diet.id === id);
-    
+
     if (!diet) {
       throw new Error(`Diet with ID ${id} not found`);
     }
-    
+
     return diet;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error fetching keto diet ${id}:`, error);
+
+    // Fallback to local JSON file if RapidAPI returns a 429 error
+    if (error.response?.status === 429) {
+      console.warn('RapidAPI rate limit exceeded. Falling back to local JSON file.');
+      const diets = require('../api-diets.json');
+      const diet = diets.find((diet: KetoDiet) => diet.id === id);
+
+      if (!diet) {
+        throw new Error(`Diet with ID ${id} not found in local JSON file`);
+      }
+
+      return diet;
+    }
+
     throw error;
   }
 }
@@ -378,10 +398,13 @@ export function mapFastAPIRecommendationToAppDiet(
   if (rec.nutritional_info.calories && rec.nutritional_info.calories < 300) {
     tags.push('low-calorie');
   }
+  console.log('starting mapping...')
 
   let imageUrl = ''
+  console.log("Keto diets for mapping:", ketoDiets)
   if (ketoDiets) {
     const matched = ketoDiets.find(diet => diet.id.toString() === rec.id.toString());
+    console.log("Matched keto diet:", matched, 'keto id', ketoDiets.map(d => d.id), 'rec id', rec.id);
     if (matched?.image) {
       imageUrl = matched.image;
     } else if (matched?.category?.thumbnail) {

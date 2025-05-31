@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import { RecipeRecommendation } from '@/lib/types';
-import { mapFastAPIRecommendationToAppDiet } from '@/lib/api';
+import { mapFastAPIRecommendationToAppDiet } from '@/lib/recommendation-api';
 import { logApiRequest, logApiSuccess, handleApiError } from '@/lib/utils/api-diagnostics';
 import { getKetoDietById } from '@/lib/api';
 
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          timeout: 10000
+          timeout: 20000
         }
       );
       
@@ -34,6 +34,7 @@ export async function GET(request: Request) {
             let ketoDiet = null;
             try {
               ketoDiet = await getKetoDietById(Number(rec.id));
+              console.log('Keto diet fetched for trending recommendation:', ketoDiet);
             } catch (e) {
             }
             return mapFastAPIRecommendationToAppDiet(rec, ketoDiet ? [ketoDiet] : undefined);

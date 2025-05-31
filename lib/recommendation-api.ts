@@ -1,5 +1,5 @@
 import { Diet, RecipeRecommendation } from './types';
-import { mapKetoDietToAppDiet, generateDietTags, searchKetoDiets } from './api';
+import { mapKetoDietToAppDiet, generateDietTags, searchKetoDiets, getKetoDietById } from './api';
 import axios from 'axios';
 import { 
   getCachedSimilarDiets, 
@@ -7,6 +7,8 @@ import {
   getCachedPopularDiets,
   cachePopularDiets
 } from './cache/recommendation-cache';
+
+export { mapFastAPIRecommendationToAppDiet } from './api';
 
 const API_BASE_URL = '/api/recommendations';
 
@@ -16,7 +18,7 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  timeout: 10000,
+  timeout: 20000,
 });
 
 /**
@@ -102,8 +104,11 @@ export async function getPopularDiets(num_recommendations: number = 8): Promise<
       const response = await apiClient.get(`/popular?num_recommendations=${num_recommendations}`);
       
       if (response.data && response.data.popular_diets) {
+        const ketoDiet = await getKetoDietById(Number(response.data.popular_diets[0].id));
+        console.log('Keto diet fetched for popular recommendation:', ketoDiet);
         console.log('Successfully received popular diets from API proxy');
         console.log('popular', response.data.popular_diets);
+        console.log('data', response.data);
         cachePopularDiets(num_recommendations, response.data.popular_diets);
         return response.data.popular_diets;
       } else {

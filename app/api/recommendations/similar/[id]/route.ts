@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import { RecipeRecommendation } from '@/lib/types';
-import { mapFastAPIRecommendationToAppDiet } from '@/lib/api';
+import { mapFastAPIRecommendationToAppDiet } from '@/lib/recommendation-api';
 import { logApiRequest, logApiSuccess, handleApiError } from '@/lib/utils/api-diagnostics';
 import { getKetoDietById } from '@/lib/api';
 
@@ -30,7 +30,7 @@ export async function GET(
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          timeout: 10000
+          timeout: 20000
         }
       );
       
@@ -64,7 +64,7 @@ export async function GET(
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            timeout: 10000
+            timeout: 20000
           }
         );
         

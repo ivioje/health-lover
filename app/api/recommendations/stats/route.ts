@@ -16,7 +16,7 @@ export async function GET() {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          timeout: 10000
+          timeout: 20000
         }
       );
       
